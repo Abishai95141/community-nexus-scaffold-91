@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { Helmet } from "react-helmet";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 function BuildersArcLogo() {
-  // Prominent logo
   return (
     <div className="flex flex-col items-center mb-8">
       <div className="bg-primary text-primary-foreground rounded-full h-24 w-24 flex items-center justify-center mb-3 text-4xl font-extrabold shadow-lg">
@@ -56,7 +56,7 @@ function AdminSignIn({ onResult }: { onResult?: (err: string | null) => void }) 
   };
 
   return (
-    <Card className="max-w-sm mx-auto">
+    <Card className="max-w-md mx-auto">
       <CardHeader>
         <CardTitle>Admin Sign In</CardTitle>
       </CardHeader>
@@ -79,10 +79,31 @@ function AdminSignIn({ onResult }: { onResult?: (err: string | null) => void }) 
   );
 }
 
+const GENDER_OPTIONS = [
+  { value: "Male", label: "Male" },
+  { value: "Female", label: "Female" },
+  { value: "Other", label: "Other" },
+];
+
+const DEPARTMENT_OPTIONS = [
+  "Engineering",
+  "Design",
+  "Product",
+  "Marketing",
+  "Sales",
+  "HR",
+  "Other",
+];
+
 function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
+  const [age, setAge] = useState<number | "">("");
+  const [gender, setGender] = useState("");
+  const [department, setDepartment] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -99,49 +120,146 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
       return;
     }
     if (mode === "signup") {
+      if (!name || !age || !gender || !department) {
+        setErr("Please fill in all required fields.");
+        setLoading(false);
+        onResult?.("Please fill in all required fields.");
+        return;
+      }
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        setErr("Invalid email address.");
+        setLoading(false);
+        onResult?.("Invalid email address.");
+        return;
+      }
+      if (password.length < 6) {
+        setErr("Password must be at least 6 characters long.");
+        setLoading(false);
+        onResult?.("Password must be at least 6 characters long.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErr("Passwords do not match.");
+        setLoading(false);
+        onResult?.("Passwords do not match.");
+        return;
+      }
       // Sign up
       const { error, data } = await supabase.auth.signUp({ email, password });
       if (error) {
         setErr(error.message);
         onResult?.(error.message);
-      } else {
-        if (data.user) {
-          await supabase.from("user_roles").upsert(
-            [{ user_id: data.user.id, role: "member" }],
-            { onConflict: "user_id,role" }
-          );
-        }
+        setLoading(false);
+        return;
+      }
+      if (!data?.user?.id) {
+        setErr("Sign up failed. Try again later.");
+        setLoading(false);
+        onResult?.("Sign up failed. Try again later.");
+        return;
+      }
+      // Insert into user_roles and profiles
+      try {
+        await supabase.from("user_roles").upsert(
+          [{ user_id: data.user.id, role: "member" }],
+          { onConflict: "user_id,role" }
+        );
+        await supabase.from("profiles").upsert(
+          [{
+            id: data.user.id,
+            name,
+            age: typeof age === "string" ? parseInt(age, 10) : age,
+            gender,
+            department,
+          }],
+          { onConflict: "id" }
+        );
         onResult?.(null);
         navigate("/");
+      } catch (errUpsert) {
+        setErr("Error saving your profile. Please contact support.");
+        onResult?.("Error saving your profile. Please contact support.");
       }
-    } else {
-      // Sign in
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setErr(error.message);
-        onResult?.(error.message);
-      } else {
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData.user) {
-          await supabase.from("user_roles").upsert(
-            [{ user_id: userData.user.id, role: "member" }],
-            { onConflict: "user_id,role" }
-          );
-        }
-        onResult?.(null);
-        navigate("/");
-      }
+      setLoading(false);
+      return;
     }
+    // Sign in
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setErr(error.message);
+      onResult?.(error.message);
+      setLoading(false);
+      return;
+    }
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user) {
+      await supabase.from("user_roles").upsert(
+        [{ user_id: userData.user.id, role: "member" }],
+        { onConflict: "user_id,role" }
+      );
+    }
+    onResult?.(null);
+    navigate("/");
     setLoading(false);
   };
 
+  const signupFields = (
+    <>
+      <Input
+        placeholder="Name"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        required={mode === "signup"}
+      />
+      <Input
+        placeholder="Age"
+        type="number"
+        min={1}
+        value={age}
+        onChange={e => setAge(e.target.value ? Number(e.target.value) : "")}
+        required={mode === "signup"}
+      />
+
+      <Select
+        value={gender}
+        onValueChange={setGender}
+        required={mode === "signup"}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select Gender" />
+        </SelectTrigger>
+        <SelectContent>
+          {GENDER_OPTIONS.map(opt =>
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+          )}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={department}
+        onValueChange={setDepartment}
+        required={mode === "signup"}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select Department" />
+        </SelectTrigger>
+        <SelectContent>
+          {DEPARTMENT_OPTIONS.map(opt =>
+            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+          )}
+        </SelectContent>
+      </Select>
+    </>
+  );
+
   return (
-    <Card className="max-w-sm mx-auto">
+    <Card className="max-w-xl w-full mx-auto">
       <CardHeader>
         <CardTitle>Member {mode === "signup" ? "Sign Up" : "Sign In"}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="space-y-4">
+          {mode === "signup" && signupFields}
           <Input
             placeholder="Email"
             type="email"
@@ -158,6 +276,16 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
             required
             autoComplete={mode === "signup" ? "new-password" : "current-password"}
           />
+          {mode === "signup" && (
+            <Input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
+              autoComplete="new-password"
+            />
+          )}
           {err && <p className="text-destructive text-sm">{err}</p>}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Processing..." : mode === "signup" ? "Sign Up" : "Sign In"}
@@ -182,7 +310,7 @@ export default function AuthPage() {
   const [authMode, setAuthMode] = useState<"admin" | "member">("member");
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
-  if (loading) return null; // Or show loading spinner
+  if (loading) return null;
 
   if (role === "admin" || role === "member") return <Navigate to="/" replace />;
 
@@ -193,7 +321,6 @@ export default function AuthPage() {
       </Helmet>
       <div className="min-h-screen bg-background flex flex-col justify-center items-center">
         <BuildersArcLogo />
-
         <div className="mb-4">
           <div className="flex justify-center space-x-2">
             <Button
