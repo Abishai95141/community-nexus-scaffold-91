@@ -18,7 +18,6 @@ export function useVoteIdea() {
       return true;
     },
     onSuccess: (_, variables) => {
-      // Use as const to preserve the exact type of the array for both query keys
       queryClient.invalidateQueries({ queryKey: ["ideas"] as const });
       queryClient.invalidateQueries({ queryKey: ["idea", variables.ideaId] as const });
     },
