@@ -1,8 +1,8 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { PostgrestError } from "@supabase/supabase-js"; // Optional: Import for specific error typing
+import type { PostgrestError } from "@supabase/supabase-js";
 
-// Define the type for variables for clarity (optional but good practice)
 type VoteVariables = {
   ideaId: string;
   value: 1 | -1;
@@ -11,37 +11,53 @@ type VoteVariables = {
 export function useVoteIdea() {
   const queryClient = useQueryClient();
 
-  // Explicitly provide generic types to useMutation
-  return useMutation<
-    boolean,         // TData: Type returned by mutationFn on success
-    PostgrestError,  // TError: Type of error thrown (use Error if PostgrestError is not needed)
-    VoteVariables,   // TVariables: Type of variables passed to mutationFn
-    unknown          // TContext: Type for mutation context (use unknown if not using onMutate)
-  >({
-    mutationFn: async ({ ideaId, value }: VoteVariables) => { // Use the defined type here too
-      // Note: Supabase RPC errors might be shaped differently, adjust TError if needed.
-      // The { error } might be PostgrestError | null.
-      const { error } = await supabase.rpc("vote_on_idea", {
-        idea_id: ideaId,
-        vote_value: value,
-      });
+  // Fix types and use upsert for voting
+  return useMutation<boolean, PostgrestError, VoteVariables, unknown>({
+    mutationFn: async ({ ideaId, value }) => {
+      // Get current user
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !user) throw new Error("User not authenticated");
 
-      if (error) {
-        // Ensure the thrown error matches the TError type
-        console.error("Supabase RPC error:", error);
-        throw error; // This error should ideally be PostgrestError
+      // Check existing vote
+      const { data: existingVote, error: getError } = await supabase
+        .from("idea_votes")
+        .select("*")
+        .eq("idea_id", ideaId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      let result;
+      if (!existingVote) {
+        // Insert new vote
+        result = await supabase.from("idea_votes").insert({
+          idea_id: ideaId,
+          user_id: user.id,
+          value,
+        });
+      } else if (existingVote.value === value) {
+        // Unvote (delete)
+        result = await supabase.from("idea_votes")
+          .delete()
+          .eq("id", existingVote.id)
+          .eq("user_id", user.id);
+      } else {
+        // Flip vote
+        result = await supabase.from("idea_votes")
+          .update({ value })
+          .eq("id", existingVote.id)
+          .eq("user_id", user.id);
       }
-      return true; // Matches TData: boolean
+
+      if (result.error) {
+        console.error("Supabase vote error:", result.error);
+        throw result.error;
+      }
+      return true;
     },
     onSuccess: (_, variables) => {
-      // Now TypeScript knows 'variables' is definitely of type VoteVariables
-      queryClient.invalidateQueries({ queryKey: ["ideas"] }); // 'as const' is often not needed here
-      queryClient.invalidateQueries({ queryKey: ["idea", variables.ideaId] }); // 'as const' is often not needed here
+      // Invalidate the idea list and individual idea
+      queryClient.invalidateQueries({ queryKey: ["ideas"] });
+      queryClient.invalidateQueries({ queryKey: ["idea", variables.ideaId] });
     },
-    // Optional: Add onError for better error handling
-    // onError: (error: PostgrestError) => {
-    //   console.error("Mutation failed:", error);
-    //   // Handle error, show notification, etc.
-    // },
   });
 }

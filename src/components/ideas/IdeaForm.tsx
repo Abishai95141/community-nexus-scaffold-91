@@ -19,17 +19,26 @@ export default function IdeaForm() {
       return;
     }
     setError(null);
-    mutate({
-      title,
-      description,
-      tags: tagsInput
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-    });
-    setTitle("");
-    setDescription("");
-    setTagsInput("");
+    mutate(
+      {
+        title,
+        description,
+        tags: tagsInput
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+      },
+      {
+        onError: (err: any) => {
+          setError(err?.message || "Could not create idea");
+        },
+        onSuccess: () => {
+          setTitle("");
+          setDescription("");
+          setTagsInput("");
+        }
+      }
+    );
   }
 
   return (

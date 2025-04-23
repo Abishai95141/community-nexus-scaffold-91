@@ -9,7 +9,7 @@ export default function IdeasList() {
   const [page, setPage] = useState(1);
   const pageSize = 6;
 
-  const { data: ideas, isLoading } = useIdeas({ tag, page, pageSize });
+  const { data: ideas, isLoading, error } = useIdeas({ tag, page, pageSize });
 
   return (
     <div>
@@ -20,6 +20,8 @@ export default function IdeasList() {
             <div key={i} className="border rounded-lg p-4 shadow-sm min-h-[120px] bg-muted animate-pulse" />
           ))}
         </div>
+      ) : error ? (
+        <div className="text-red-500 mb-6">Error loading ideas: {error.message}</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {ideas && ideas.length > 0 ? (
