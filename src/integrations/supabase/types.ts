@@ -82,6 +82,7 @@ export type Database = {
           gender: string
           id: string
           name: string
+          status: string
           updated_at: string
         }
         Insert: {
@@ -91,6 +92,7 @@ export type Database = {
           gender: string
           id: string
           name: string
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -100,6 +102,7 @@ export type Database = {
           gender?: string
           id?: string
           name?: string
+          status?: string
           updated_at?: string
         }
         Relationships: []

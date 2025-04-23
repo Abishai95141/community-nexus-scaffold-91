@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Navigate } from "react-router-dom";
@@ -158,12 +157,8 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
         onResult?.("Sign up failed. Try again later.");
         return;
       }
-      // Insert into user_roles and profiles
+      // Insert profile as 'pending'
       try {
-        await supabase.from("user_roles").upsert(
-          [{ user_id: data.user.id, role: "member" }],
-          { onConflict: "user_id,role" }
-        );
         await supabase.from("profiles").upsert(
           [{
             id: data.user.id,
@@ -171,11 +166,13 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
             age: typeof age === "string" ? parseInt(age, 10) : age,
             gender,
             department,
+            status: "pending",
           }],
           { onConflict: "id" }
         );
         onResult?.(null);
-        navigate("/");
+        alert("Signup request submitted! Await admin approval.");
+        navigate("/auth");
       } catch (errUpsert) {
         setErr("Error saving your profile. Please contact support.");
         onResult?.("Error saving your profile. Please contact support.");
@@ -191,12 +188,25 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
       setLoading(false);
       return;
     }
+    // Wait for member approval
     const { data: userData } = await supabase.auth.getUser();
-    if (userData.user) {
-      await supabase.from("user_roles").upsert(
-        [{ user_id: userData.user.id, role: "member" }],
-        { onConflict: "user_id,role" }
-      );
+    const id = userData.user?.id;
+    if (id) {
+      const { data: profile } = await supabase.from("profiles").select("status").eq("id", id).maybeSingle();
+      if (profile?.status === "pending") {
+        setErr("Your signup is pending admin approval.");
+        setLoading(false);
+        onResult?.("Your signup is pending admin approval.");
+        await supabase.auth.signOut();
+        return;
+      }
+      if (profile?.status === "rejected") {
+        setErr("Your signup has been rejected.");
+        setLoading(false);
+        onResult?.("Your signup has been rejected.");
+        await supabase.auth.signOut();
+        return;
+      }
     }
     onResult?.(null);
     navigate("/");
@@ -219,7 +229,6 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
         onChange={e => setAge(e.target.value ? Number(e.target.value) : "")}
         required={mode === "signup"}
       />
-
       <Select
         value={gender}
         onValueChange={setGender}
@@ -234,26 +243,17 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
           )}
         </SelectContent>
       </Select>
-
-      <Select
+      <Input
+        placeholder="Department"
         value={department}
-        onValueChange={setDepartment}
+        onChange={e => setDepartment(e.target.value)}
         required={mode === "signup"}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Select Department" />
-        </SelectTrigger>
-        <SelectContent>
-          {DEPARTMENT_OPTIONS.map(opt =>
-            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-          )}
-        </SelectContent>
-      </Select>
+      />
     </>
   );
 
   return (
-    <Card className="max-w-xl w-full mx-auto">
+    <Card className="max-w-2xl w-full mx-auto">
       <CardHeader>
         <CardTitle>Member {mode === "signup" ? "Sign Up" : "Sign In"}</CardTitle>
       </CardHeader>

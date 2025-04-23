@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,15 +10,26 @@ import { cn } from "@/lib/utils";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { supabase } from "@/integrations/supabase/client";
 
-interface HeaderProps {
-  className?: string;
-}
-
-export default function Header({ className }: HeaderProps) {
+export default function Header({ className }: { className?: string }) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-
   const { role, user } = useAuthUser();
+  const [userName, setUserName] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (role === "admin") {
+      setUserName("Admin");
+    } else if (role === "member" && user?.id) {
+      supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", user.id)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (data?.name) setUserName(data.name);
+        });
+    }
+  }, [role, user]);
 
   return (
     <header className={cn("border-b border-border sticky top-0 bg-background z-50", className)}>
@@ -61,7 +72,7 @@ export default function Header({ className }: HeaderProps) {
           <nav className="flex items-center space-x-1">
             {role ? (
               <>
-                <span className="text-muted-foreground mr-2">{user?.email}</span>
+                <span className="text-muted-foreground mr-2">{userName ?? user?.email}</span>
                 <Button variant="ghost" onClick={async () => {
                   await supabase.auth.signOut();
                   window.location.href = "/auth";

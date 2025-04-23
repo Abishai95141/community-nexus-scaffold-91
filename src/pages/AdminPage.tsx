@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { SkeletonPage } from "@/components/ui/skeleton-page";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PendingRequests } from "@/components/admin/PendingRequests";
 
 export default function AdminPage() {
   const [loading, setLoading] = useState(true);
@@ -12,7 +12,6 @@ export default function AdminPage() {
     const timer = setTimeout(() => {
       setLoading(false);
     }, 1000);
-    
     return () => clearTimeout(timer);
   }, []);
   
@@ -34,10 +33,12 @@ export default function AdminPage() {
         <Tabs defaultValue="overview">
           <TabsList className="mb-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="requests">Signup Requests</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
+
           <TabsContent value="overview">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="border rounded-lg p-4 shadow-sm">
@@ -69,6 +70,14 @@ export default function AdminPage() {
                     <div className="text-sm text-muted-foreground">{i + 1} hour ago</div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="requests">
+            <div className="border rounded-lg shadow-sm">
+              <div className="p-4">
+                <h3 className="text-lg font-medium mb-3">Pending Signup Requests</h3>
+                <PendingRequests />
               </div>
             </div>
           </TabsContent>

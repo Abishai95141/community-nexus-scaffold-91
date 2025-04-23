@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,9 @@ import {
   Book,
   LayoutDashboard
 } from "lucide-react";
+import { useAuthUser } from "@/hooks/useAuthUser";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NavLinksProps {
   className?: string;
@@ -29,7 +33,7 @@ const navItems: NavItem[] = [
   { title: "Projects", href: "/projects", icon: Rocket },
   { title: "Docs & Resources", href: "/docs", icon: FileText },
   { title: "Tech Talks", href: "/talks", icon: Layout },
-  { title: "Community", href: "/community", icon: Users }
+  { title: "Community", href: "/community", icon: Users },
 ];
 
 function getNavItems(role: "admin" | "member" | null) {
@@ -38,12 +42,26 @@ function getNavItems(role: "admin" | "member" | null) {
   );
 }
 
-import { useAuthUser } from "@/hooks/useAuthUser";
-
 export function NavLinks({ className, onNavClick }: NavLinksProps) {
-  const { role } = useAuthUser();
+  const { role, user } = useAuthUser();
   const location = useLocation();
-  
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (role === "admin") {
+      setUserName("Admin");
+    } else if (role === "member" && user?.id) {
+      supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", user.id)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (data?.name) setUserName(data.name);
+        });
+    }
+  }, [role, user]);
+
   return (
     <div className={cn("flex flex-col space-y-1", className)}>
       {getNavItems(role).map((item) => (
@@ -65,6 +83,11 @@ export function NavLinks({ className, onNavClick }: NavLinksProps) {
           </Link>
         </Button>
       ))}
+      {role &&
+        <div className="px-4 py-2 text-xs text-muted-foreground mt-4">
+          {userName ?? (user?.email ?? "")}
+        </div>
+      }
       <Button variant="ghost" asChild>
         <Link to="/auth">Sign In</Link>
       </Button>
