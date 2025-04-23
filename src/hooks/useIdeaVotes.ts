@@ -21,7 +21,8 @@ export function useVoteIdea() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["ideas"] });
-      queryClient.invalidateQueries({ queryKey: ["idea", variables.ideaId] });
+      // Fix the type error by providing a proper type for the queryKey array
+      queryClient.invalidateQueries({ queryKey: ["idea", variables.ideaId] as [string, string] });
     },
   });
 }
