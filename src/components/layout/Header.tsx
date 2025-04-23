@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Menu } from "lucide-react";
@@ -7,6 +8,7 @@ import MobileNav from "./MobileNav";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { cn } from "@/lib/utils";
 import { useAuthUser } from "@/hooks/useAuthUser";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HeaderProps {
   className?: string;
@@ -37,9 +39,9 @@ export default function Header({ className }: HeaderProps) {
             className="flex items-center space-x-2"
           >
             <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">CN</span>
+              <span className="text-primary-foreground font-bold">BA</span>
             </div>
-            <span className="font-bold hidden sm:inline-block">Community Nexus</span>
+            <span className="font-bold hidden sm:inline-block text-lg">Builders Arc</span>
           </Link>
         </div>
         
@@ -62,7 +64,7 @@ export default function Header({ className }: HeaderProps) {
                 <span className="text-muted-foreground mr-2">{user?.email}</span>
                 <Button variant="ghost" onClick={async () => {
                   await supabase.auth.signOut();
-                  window.location.reload();
+                  window.location.href = "/auth";
                 }}>Sign Out</Button>
               </>
             ) : (

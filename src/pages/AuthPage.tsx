@@ -7,6 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAuthUser } from "@/hooks/useAuthUser";
 
+function BuildersArcLogo() {
+  // Simple placeholder, update as desired
+  return (
+    <div className="flex flex-col items-center mb-4">
+      <div className="bg-primary text-primary-foreground rounded-full h-20 w-20 flex items-center justify-center mb-2 text-3xl font-extrabold">
+        BA
+      </div>
+      <span className="font-bold text-3xl tracking-tight">Builders Arc</span>
+    </div>
+  );
+}
+
 function AdminSignIn() {
   const [email, setEmail] = useState("abishaioff@gmail.com");
   const [password, setPassword] = useState("");
@@ -19,7 +31,6 @@ function AdminSignIn() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    // Only let sign in for admin email
     if (email !== "abishaioff@gmail.com") {
       setError("Not allowed. Only admin can use this form.");
       setLoading(false);
@@ -29,14 +40,14 @@ function AdminSignIn() {
     if (error) {
       setError(error.message);
     } else {
-      // Assign admin role if not yet assigned (robustness)
       const { data: userData } = await supabase.auth.getUser();
       if (userData.user) {
-        await supabase.from("user_roles").upsert([
-          { user_id: userData.user.id, role: "admin" }
-        ], { onConflict: ["user_id", "role"] });
+        await supabase.from("user_roles").upsert(
+          [{ user_id: userData.user.id, role: "admin" }],
+          { onConflict: "user_id,role" }
+        );
       }
-      navigate("/admin");
+      navigate("/");
     }
     setLoading(false);
   };
@@ -89,11 +100,11 @@ function MemberAuth() {
       if (error) {
         setErr(error.message);
       } else {
-        // Assign default member role
         if (data.user) {
-          await supabase.from("user_roles").upsert([
-            { user_id: data.user.id, role: "member" }
-          ], { onConflict: ["user_id", "role"] });
+          await supabase.from("user_roles").upsert(
+            [{ user_id: data.user.id, role: "member" }],
+            { onConflict: "user_id,role" }
+          );
         }
         navigate("/");
       }
@@ -105,9 +116,10 @@ function MemberAuth() {
       } else {
         const { data: userData } = await supabase.auth.getUser();
         if (userData.user) {
-          await supabase.from("user_roles").upsert([
-            { user_id: userData.user.id, role: "member" }
-          ], { onConflict: ["user_id", "role"] });
+          await supabase.from("user_roles").upsert(
+            [{ user_id: userData.user.id, role: "member" }],
+            { onConflict: "user_id,role" }
+          );
         }
         navigate("/");
       }
@@ -162,15 +174,11 @@ export default function AuthPage() {
 
   if (loading) return null; // Or show loading spinner
 
-  // If already authed, redirect
-  if (role === "admin") return <Navigate to="/admin" replace />;
-  if (role === "member") return <Navigate to="/" replace />;
+  if (role === "admin" || role === "member") return <Navigate to="/" replace />;
 
   return (
     <div className="flex flex-col items-center py-12 min-h-screen bg-background">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Sign In to Community Nexus</h1>
-      </div>
+      <BuildersArcLogo />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <AdminSignIn />

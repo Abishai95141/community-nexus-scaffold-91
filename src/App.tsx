@@ -1,8 +1,9 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import MainLayout from "./components/layout/MainLayout";
 import HomePage from "./pages/HomePage";
 import IdeasPage from "./pages/IdeasPage";
@@ -15,7 +16,7 @@ import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 import { useAuthUser } from "./hooks/useAuthUser";
 import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +25,17 @@ function AppRoutes() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Redirect unauthenticated users to /auth (make it the landing page).
   useEffect(() => {
+    // No role but not loading and not on /auth, redirect to auth
+    if (!loading && !role && location.pathname !== "/auth") {
+      navigate("/auth", { replace: true });
+    }
+    // If logged in and on /auth, redirect to Home
+    if (!loading && !!role && location.pathname === "/auth") {
+      navigate("/", { replace: true });
+    }
+    // If not admin and trying to access /admin, redirect to Home
     if (!loading && location.pathname.startsWith("/admin") && role !== "admin") {
       navigate("/", { replace: true });
     }
@@ -33,13 +44,13 @@ function AppRoutes() {
   return (
     <Routes>
       <Route element={<MainLayout />}>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={role ? <HomePage /> : <Navigate to="/auth" replace />} />
         <Route path="/auth" element={<AuthPage />} />
-        <Route path="/ideas" element={<IdeasPage />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/docs" element={<DocsPage />} />
-        <Route path="/talks" element={<TechTalksPage />} />
-        <Route path="/community" element={<CommunityPage />} />
+        <Route path="/ideas" element={role ? <IdeasPage /> : <Navigate to="/auth" replace />} />
+        <Route path="/projects" element={role ? <ProjectsPage /> : <Navigate to="/auth" replace />} />
+        <Route path="/docs" element={role ? <DocsPage /> : <Navigate to="/auth" replace />} />
+        <Route path="/talks" element={role ? <TechTalksPage /> : <Navigate to="/auth" replace />} />
+        <Route path="/community" element={role ? <CommunityPage /> : <Navigate to="/auth" replace />} />
         {role === "admin" && (
           <Route path="/admin" element={<AdminPage />} />
         )}

@@ -5,31 +5,30 @@ import { SkeletonPage } from "@/components/ui/skeleton-page";
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     // Simulate loading delay
     const timer = setTimeout(() => {
       setLoading(false);
     }, 1000);
-    
+
     return () => clearTimeout(timer);
   }, []);
-  
+
   if (loading) {
     return <SkeletonPage />;
   }
-  
+
   return (
     <>
       <Helmet>
-        <title>Home | Community Nexus</title>
+        <title>Home | Builders Arc</title>
       </Helmet>
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Home</h1>
-          <p className="text-muted-foreground">Welcome to Community Nexus</p>
+          <p className="text-muted-foreground">Welcome to Builders Arc</p>
         </div>
-        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="border rounded-lg p-4 shadow-sm">
             <h3 className="text-lg font-medium">Recent Activity</h3>
