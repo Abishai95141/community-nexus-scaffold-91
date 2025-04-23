@@ -13,10 +13,6 @@ import TechTalksPage from "./pages/TechTalksPage";
 import CommunityPage from "./pages/CommunityPage";
 import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
-import LoginPage from "./pages/auth/LoginPage";
-import RegisterPage from "./pages/auth/RegisterPage";
-import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 const queryClient = new QueryClient();
 
@@ -26,13 +22,6 @@ const App = () => (
       <Toaster />
       <Sonner />
       <Routes>
-        {/* Auth Routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        
-        {/* Main App Routes */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/ideas" element={<IdeasPage />} />
