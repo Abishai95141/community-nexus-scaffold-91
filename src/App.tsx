@@ -43,9 +43,10 @@ function AppRoutes() {
 
   return (
     <Routes>
+      {/* Only render AuthPage without MainLayout */}
+      <Route path="/auth" element={<AuthPage />} />
       <Route element={<MainLayout />}>
         <Route path="/" element={role ? <HomePage /> : <Navigate to="/auth" replace />} />
-        <Route path="/auth" element={<AuthPage />} />
         <Route path="/ideas" element={role ? <IdeasPage /> : <Navigate to="/auth" replace />} />
         <Route path="/projects" element={role ? <ProjectsPage /> : <Navigate to="/auth" replace />} />
         <Route path="/docs" element={role ? <DocsPage /> : <Navigate to="/auth" replace />} />

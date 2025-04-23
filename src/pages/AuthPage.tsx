@@ -6,21 +6,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAuthUser } from "@/hooks/useAuthUser";
+import { Helmet } from "react-helmet";
 
 function BuildersArcLogo() {
-  // Simple placeholder, update as desired
+  // Prominent logo
   return (
-    <div className="flex flex-col items-center mb-4">
-      <div className="bg-primary text-primary-foreground rounded-full h-20 w-20 flex items-center justify-center mb-2 text-3xl font-extrabold">
+    <div className="flex flex-col items-center mb-8">
+      <div className="bg-primary text-primary-foreground rounded-full h-24 w-24 flex items-center justify-center mb-3 text-4xl font-extrabold shadow-lg">
         BA
       </div>
-      <span className="font-bold text-3xl tracking-tight">Builders Arc</span>
+      <span className="font-extrabold text-4xl tracking-tighter">Builders Arc</span>
     </div>
   );
 }
 
-function AdminSignIn() {
-  const [email, setEmail] = useState("abishaioff@gmail.com");
+function AdminSignIn({ onResult }: { onResult?: (err: string | null) => void }) {
+  const [email] = useState("abishaioff@gmail.com");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -39,6 +40,7 @@ function AdminSignIn() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError(error.message);
+      onResult?.(error.message);
     } else {
       const { data: userData } = await supabase.auth.getUser();
       if (userData.user) {
@@ -47,6 +49,7 @@ function AdminSignIn() {
           { onConflict: "user_id,role" }
         );
       }
+      onResult?.(null);
       navigate("/");
     }
     setLoading(false);
@@ -76,7 +79,7 @@ function AdminSignIn() {
   );
 }
 
-function MemberAuth() {
+function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -92,6 +95,7 @@ function MemberAuth() {
     if (email.trim().toLowerCase() === "abishaioff@gmail.com") {
       setErr("Admin email cannot be used for member login.");
       setLoading(false);
+      onResult?.("Admin email cannot be used for member login.");
       return;
     }
     if (mode === "signup") {
@@ -99,6 +103,7 @@ function MemberAuth() {
       const { error, data } = await supabase.auth.signUp({ email, password });
       if (error) {
         setErr(error.message);
+        onResult?.(error.message);
       } else {
         if (data.user) {
           await supabase.from("user_roles").upsert(
@@ -106,6 +111,7 @@ function MemberAuth() {
             { onConflict: "user_id,role" }
           );
         }
+        onResult?.(null);
         navigate("/");
       }
     } else {
@@ -113,6 +119,7 @@ function MemberAuth() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setErr(error.message);
+        onResult?.(error.message);
       } else {
         const { data: userData } = await supabase.auth.getUser();
         if (userData.user) {
@@ -121,6 +128,7 @@ function MemberAuth() {
             { onConflict: "user_id,role" }
           );
         }
+        onResult?.(null);
         navigate("/");
       }
     }
@@ -171,22 +179,48 @@ function MemberAuth() {
 
 export default function AuthPage() {
   const { role, loading } = useAuthUser();
+  const [authMode, setAuthMode] = useState<"admin" | "member">("member");
+  const [errMsg, setErrMsg] = useState<string | null>(null);
 
   if (loading) return null; // Or show loading spinner
 
   if (role === "admin" || role === "member") return <Navigate to="/" replace />;
 
   return (
-    <div className="flex flex-col items-center py-12 min-h-screen bg-background">
-      <BuildersArcLogo />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <AdminSignIn />
+    <>
+      <Helmet>
+        <title>Builders Arc | Sign in</title>
+      </Helmet>
+      <div className="min-h-screen bg-background flex flex-col justify-center items-center">
+        <BuildersArcLogo />
+
+        <div className="mb-4">
+          <div className="flex justify-center space-x-2">
+            <Button
+              variant={authMode === "member" ? "default" : "outline"}
+              onClick={() => { setAuthMode("member"); setErrMsg(null); }}
+            >
+              Member
+            </Button>
+            <Button
+              variant={authMode === "admin" ? "default" : "outline"}
+              onClick={() => { setAuthMode("admin"); setErrMsg(null); }}
+            >
+              Admin
+            </Button>
+          </div>
         </div>
-        <div>
-          <MemberAuth />
+        {errMsg && (
+          <div className="mb-4 text-destructive font-medium">{errMsg}</div>
+        )}
+        <div className="w-full flex justify-center">
+          {authMode === "member" ? (
+            <MemberAuth onResult={setErrMsg} />
+          ) : (
+            <AdminSignIn onResult={setErrMsg} />
+          )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
