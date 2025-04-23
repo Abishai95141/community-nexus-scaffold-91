@@ -13,16 +13,14 @@ export function useVoteIdea() {
       ideaId: string;
       value: 1 | -1;
     }) => {
-      // This stub implementation; backend logic pending
-      // Upsert to idea_votes table or update existing vote
       const { error } = await supabase.rpc("vote_on_idea", { idea_id: ideaId, vote_value: value });
       if (error) throw error;
       return true;
     },
     onSuccess: (_, variables) => {
-      // Fix the type error by specifying the proper generic types
+      // Use as const to preserve the exact type of the array
       queryClient.invalidateQueries({ queryKey: ["ideas"] as const });
-      queryClient.invalidateQueries({ queryKey: ["idea", variables.ideaId] as readonly [string, string] });
+      queryClient.invalidateQueries({ queryKey: ["idea", variables.ideaId] });
     },
   });
 }
