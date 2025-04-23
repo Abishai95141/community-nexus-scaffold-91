@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Menu } from "lucide-react";
@@ -7,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import MobileNav from "./MobileNav";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { cn } from "@/lib/utils";
+import { useAuthUser } from "@/hooks/useAuthUser";
 
 interface HeaderProps {
   className?: string;
@@ -15,7 +15,9 @@ interface HeaderProps {
 export default function Header({ className }: HeaderProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  
+
+  const { role, user } = useAuthUser();
+
   return (
     <header className={cn("border-b border-border sticky top-0 bg-background z-50", className)}>
       <div className="container flex h-16 items-center px-4 sm:justify-between sm:space-x-0">
@@ -55,9 +57,19 @@ export default function Header({ className }: HeaderProps) {
         
         <div className="hidden md:flex items-center">
           <nav className="flex items-center space-x-1">
-            <Button variant="ghost" asChild>
-              <Link to="/profile">Profile</Link>
-            </Button>
+            {role ? (
+              <>
+                <span className="text-muted-foreground mr-2">{user?.email}</span>
+                <Button variant="ghost" onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.reload();
+                }}>Sign Out</Button>
+              </>
+            ) : (
+              <Button variant="ghost" asChild>
+                <Link to="/auth">Sign In</Link>
+              </Button>
+            )}
           </nav>
         </div>
       </div>

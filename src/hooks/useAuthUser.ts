@@ -1,0 +1,57 @@
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface AuthUserState {
+  loading: boolean;
+  session: any;
+  user: any;
+  role: "admin" | "member" | null;
+}
+
+export function useAuthUser() {
+  const [state, setState] = useState<AuthUserState>({
+    loading: true,
+    session: null,
+    user: null,
+    role: null,
+  });
+
+  useEffect(() => {
+    // Listen for auth changes and get profile/role
+    const getSessionAndRole = async () => {
+      // This flow prevents race conditions if quickly signing in/out
+      setState((s) => ({ ...s, loading: true }));
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user || null;
+
+      let role: "admin" | "member" | null = null;
+      if (user) {
+        // Check user_roles table for role
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id);
+
+        role = roles?.length
+          ? (roles[0].role as "admin" | "member")
+          : (user.email === "abishaioff@gmail.com" ? "admin" : "member");
+      }
+
+      setState({ session, user, role, loading: false });
+    };
+
+    // Set up listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      getSessionAndRole();
+    });
+    // Initial load
+    getSessionAndRole();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  return state;
+}

@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import {
 interface NavLinksProps {
   className?: string;
   onNavClick?: () => void;
+  role?: "admin" | "member" | null;
 }
 
 type NavItem = {
@@ -29,16 +29,24 @@ const navItems: NavItem[] = [
   { title: "Projects", href: "/projects", icon: Rocket },
   { title: "Docs & Resources", href: "/docs", icon: FileText },
   { title: "Tech Talks", href: "/talks", icon: Layout },
-  { title: "Community", href: "/community", icon: Users },
-  { title: "Admin", href: "/admin", icon: LayoutDashboard }
+  { title: "Community", href: "/community", icon: Users }
 ];
 
+function getNavItems(role: "admin" | "member" | null) {
+  return navItems.filter(item =>
+    item.title !== "Admin" || role === "admin"
+  );
+}
+
+import { useAuthUser } from "@/hooks/useAuthUser";
+
 export function NavLinks({ className, onNavClick }: NavLinksProps) {
+  const { role } = useAuthUser();
   const location = useLocation();
   
   return (
     <div className={cn("flex flex-col space-y-1", className)}>
-      {navItems.map((item) => (
+      {getNavItems(role).map((item) => (
         <Button
           key={item.href}
           variant={location.pathname === item.href ? "default" : "ghost"}
@@ -57,6 +65,9 @@ export function NavLinks({ className, onNavClick }: NavLinksProps) {
           </Link>
         </Button>
       ))}
+      <Button variant="ghost" asChild>
+        <Link to="/auth">Sign In</Link>
+      </Button>
     </div>
   );
 }
