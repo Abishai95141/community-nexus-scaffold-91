@@ -20,9 +20,9 @@ export function useVoteIdea() {
       return true;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["ideas"] });
-      // Fix the type error by providing a proper type for the queryKey array
-      queryClient.invalidateQueries({ queryKey: ["idea", variables.ideaId] as [string, string] });
+      // Fix the type error by specifying the proper generic types
+      queryClient.invalidateQueries({ queryKey: ["ideas"] as const });
+      queryClient.invalidateQueries({ queryKey: ["idea", variables.ideaId] as readonly [string, string] });
     },
   });
 }
