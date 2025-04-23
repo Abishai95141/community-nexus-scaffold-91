@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useIdeaComments, usePostComment } from "@/hooks/useIdeaComments";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface IdeaCommentsProps {
   ideaId: string;
@@ -20,7 +21,7 @@ function Comment({
 }) {
   const [showReply, setShowReply] = useState(false);
   const [replyContent, setReplyContent] = useState("");
-  const { mutate, isLoading } = usePostComment(comment.idea_id);
+  const { mutate, isPending } = usePostComment(comment.idea_id);
 
   function handleReply() {
     mutate(
@@ -56,10 +57,15 @@ function Comment({
           <Button 
             className="mt-1"
             size="sm"
-            loading={isLoading}
+            disabled={isPending}
             onClick={handleReply}
           >
-            Post Reply
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                Posting...
+              </>
+            ) : "Post Reply"}
           </Button>
         </div>
       )}
@@ -100,8 +106,17 @@ export default function IdeaComments({ ideaId }: IdeaCommentsProps) {
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
         />
-        <Button size="sm" loading={postComment.isLoading} onClick={handlePost}>
-          Post
+        <Button 
+          size="sm" 
+          disabled={postComment.isPending} 
+          onClick={handlePost}
+        >
+          {postComment.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+              Posting...
+            </>
+          ) : "Post"}
         </Button>
       </div>
       {isLoading ? (

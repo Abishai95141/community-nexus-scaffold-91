@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface IdeasFiltersProps {
   tag?: string;
@@ -8,17 +7,8 @@ interface IdeasFiltersProps {
 }
 
 export default function IdeasFilters({ tag, onTagChange }: IdeasFiltersProps) {
-  const [tags, setTags] = useState<string[]>([]);
-
-  useEffect(() => {
-    async function fetchTags() {
-      const { data, error } = await supabase.from("tags").select("name");
-      if (!error && data) {
-        setTags(data.map((d: { name: string }) => d.name));
-      }
-    }
-    fetchTags();
-  }, []);
+  // Mock tags until database setup is complete
+  const tags = ["mentorship", "learning", "workshop", "project", "community"];
 
   return (
     <div className="flex items-center gap-4 py-2 mb-4">

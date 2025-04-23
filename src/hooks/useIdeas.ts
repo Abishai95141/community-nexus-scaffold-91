@@ -6,18 +6,27 @@ export function useIdeas({ tag, page = 1, pageSize = 6 }: { tag?: string; page?:
   return useQuery({
     queryKey: ["ideas", { tag, page, pageSize }],
     queryFn: async () => {
-      let query = supabase
-        .from("ideas")
-        .select("id, title, description, tags, vote_count, created_at, user_id")
-        .order("created_at", { ascending: false })
-        .range((page - 1) * pageSize, page * pageSize - 1);
-
-      if (tag) {
-        query = query.contains("tags", [tag]);
-      }
-      const { data, error, count } = await query;
-      if (error) throw error;
-      return data;
+      // Temporarily return mock data until database setup is complete
+      return [
+        {
+          id: "1",
+          title: "Community Mentorship Program",
+          description: "Connect experienced developers with newcomers for knowledge sharing",
+          tags: ["mentorship", "learning"],
+          vote_count: 42,
+          created_at: new Date().toISOString(),
+          user_id: "user1"
+        },
+        {
+          id: "2",
+          title: "Tech Workshop Series",
+          description: "Monthly hands-on workshops covering different technologies",
+          tags: ["workshop", "learning"],
+          vote_count: 35,
+          created_at: new Date().toISOString(),
+          user_id: "user2"
+        }
+      ];
     },
   });
 }
@@ -26,13 +35,9 @@ export function useCreateIdea() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (newIdea: { title: string; description: string; tags: string[] }) => {
-      const { error, data } = await supabase
-        .from("ideas")
-        .insert({ ...newIdea })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      // Stub implementation until database setup is complete
+      console.log("Creating idea:", newIdea);
+      return null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ideas"] });

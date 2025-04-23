@@ -7,13 +7,8 @@ export function useIdeaComments(ideaId: string) {
   return useQuery({
     queryKey: ["idea-comments", ideaId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("comments")
-        .select("id, content, parent_id, user_id, created_at")
-        .eq("idea_id", ideaId)
-        .order("created_at");
-      if (error) throw error;
-      return data;
+      // Temporarily return mock data until database setup is complete
+      return [];
     },
     enabled: !!ideaId,
   });
@@ -30,13 +25,9 @@ export function usePostComment(ideaId: string) {
       content: string;
       parentId?: string | null;
     }) => {
-      const { error, data } = await supabase
-        .from("comments")
-        .insert({ idea_id: ideaId, content, parent_id: parentId ?? null })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      // Stub implementation until database setup is complete
+      console.log("Adding comment:", { ideaId, content, parentId });
+      return null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["idea-comments", ideaId] });

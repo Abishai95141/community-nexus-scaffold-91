@@ -6,13 +6,13 @@ interface IdeaVoteButtonsProps {
   voteCount: number;
 }
 export default function IdeaVoteButtons({ ideaId, voteCount }: IdeaVoteButtonsProps) {
-  const { mutate: vote, isLoading } = useVoteIdea();
+  const { mutate: vote, isPending } = useVoteIdea();
 
   return (
     <div className="flex items-center gap-4">
       <button
         className="px-2 py-0.5 border rounded bg-background hover:bg-primary/10"
-        disabled={isLoading}
+        disabled={isPending}
         onClick={() => vote({ ideaId, value: 1 })}
         aria-label="Upvote"
       >
@@ -21,7 +21,7 @@ export default function IdeaVoteButtons({ ideaId, voteCount }: IdeaVoteButtonsPr
       <span className="font-bold">{voteCount}</span>
       <button
         className="px-2 py-0.5 border rounded bg-background hover:bg-primary/10"
-        disabled={isLoading}
+        disabled={isPending}
         onClick={() => vote({ ideaId, value: -1 })}
         aria-label="Downvote"
       >
