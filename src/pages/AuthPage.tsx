@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Navigate } from "react-router-dom";
@@ -108,17 +109,21 @@ function MemberAuth({
   const [department, setDepartment] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const navigate = useNavigate();
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErr(null);
+
     if (email.trim().toLowerCase() === "abishaioff@gmail.com") {
       setErr("Admin email cannot be used for member login.");
       setLoading(false);
       onResult?.("Admin email cannot be used for member login.");
       return;
     }
+
     if (mode === "signup") {
       if (!name || !age || !gender || !department) {
         setErr("Please fill in all required fields.");
@@ -126,24 +131,28 @@ function MemberAuth({
         onResult?.("Please fill in all required fields.");
         return;
       }
+
       if (!/^\S+@\S+\.\S+$/.test(email)) {
         setErr("Invalid email address.");
         setLoading(false);
         onResult?.("Invalid email address.");
         return;
       }
+
       if (password.length < 6) {
         setErr("Password must be at least 6 characters long.");
         setLoading(false);
         onResult?.("Password must be at least 6 characters long.");
         return;
       }
+
       if (password !== confirmPassword) {
         setErr("Passwords do not match.");
         setLoading(false);
         onResult?.("Passwords do not match.");
         return;
       }
+
       const {
         error,
         data
@@ -151,18 +160,21 @@ function MemberAuth({
         email,
         password
       });
+
       if (error) {
         setErr(error.message);
         onResult?.(error.message);
         setLoading(false);
         return;
       }
+
       if (!data?.user?.id) {
         setErr("Sign up failed. Try again later.");
         setLoading(false);
         onResult?.("Sign up failed. Try again later.");
         return;
       }
+
       try {
         await supabase.from("profiles").upsert([{
           id: data.user.id,
@@ -174,9 +186,10 @@ function MemberAuth({
         }], {
           onConflict: "id"
         });
+        
+        // Display success message instead of alert
+        setSignupSuccess(true);
         onResult?.(null);
-        alert("Signup request submitted! Await admin approval.");
-        navigate("/auth");
       } catch (errUpsert) {
         setErr("Error saving your profile. Please contact support.");
         onResult?.("Error saving your profile. Please contact support.");
@@ -184,26 +197,31 @@ function MemberAuth({
       setLoading(false);
       return;
     }
+
     const {
       error
     } = await supabase.auth.signInWithPassword({
       email,
       password
     });
+
     if (error) {
       setErr(error.message);
       onResult?.(error.message);
       setLoading(false);
       return;
     }
+
     const {
       data: userData
     } = await supabase.auth.getUser();
     const id = userData.user?.id;
+
     if (id) {
       const {
         data: profile
       } = await supabase.from("profiles").select("status").eq("id", id).maybeSingle();
+      
       if (profile?.status === "pending") {
         setErr("Your signup is pending admin approval.");
         setLoading(false);
@@ -211,6 +229,7 @@ function MemberAuth({
         await supabase.auth.signOut();
         return;
       }
+      
       if (profile?.status === "rejected") {
         setErr("Your signup has been rejected.");
         setLoading(false);
@@ -219,23 +238,38 @@ function MemberAuth({
         return;
       }
     }
+
     onResult?.(null);
     navigate("/");
     setLoading(false);
   };
-  const signupFields = <>
-      <Input placeholder="Name" value={name} onChange={e => setName(e.target.value)} required={mode === "signup"} />
-      <Input placeholder="Age" type="number" min={1} value={age} onChange={e => setAge(e.target.value ? Number(e.target.value) : "")} required={mode === "signup"} />
-      <Select value={gender} onValueChange={setGender} required={mode === "signup"}>
-        <SelectTrigger>
-          <SelectValue placeholder="Select Gender" />
-        </SelectTrigger>
-        <SelectContent>
-          {GENDER_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-        </SelectContent>
-      </Select>
-      <Input placeholder="Department" value={department} onChange={e => setDepartment(e.target.value)} required={mode === "signup"} />
-    </>;
+
+  if (signupSuccess) {
+    return (
+      <Card className="bg-white shadow-none border-none p-8 w-full max-w-md">
+        <div className="space-y-6 text-center">
+          <div className="mx-auto bg-green-100 rounded-full p-3 w-16 h-16 flex items-center justify-center">
+            <Check className="h-8 w-8 text-green-600" />
+          </div>
+          <h2 className="text-2xl font-bold">Signup Request Submitted</h2>
+          <p className="text-muted-foreground">
+            Thank you for signing up! Your request has been received and is pending admin approval.
+            You will be able to access the platform once your request is approved.
+          </p>
+          <Button 
+            onClick={() => {
+              setSignupSuccess(false);
+              setMode("signin");
+            }}
+            className="mt-4"
+          >
+            Back to Sign In
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   return <Card className="bg-white shadow-none border-none p-8 w-full max-w-md">
       <div className="space-y-6">
         <div className="text-center space-y-2">
