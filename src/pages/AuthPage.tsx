@@ -3,18 +3,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { Helmet } from "react-helmet";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 function BuildersArcLogo() {
   return (
-    <div className="flex flex-col items-center mb-8">
-      <div className="bg-primary text-primary-foreground rounded-full h-24 w-24 flex items-center justify-center mb-3 text-4xl font-extrabold shadow-lg">
-        BA
+    <div className="flex flex-col items-center">
+      <div className="h-20 w-auto">
+        <img src="/lovable-uploads/fee84714-0da6-4e05-817a-e53bfd098f17.png" alt="Builders Arc" className="h-full w-auto" />
       </div>
-      <span className="font-extrabold text-4xl tracking-tighter">Builders Arc</span>
+      <div className="mt-6 text-center space-y-4">
+        <h2 className="text-2xl font-semibold">Join our community of builders and innovators.</h2>
+        <p className="text-lg opacity-80">Connect, collaborate, and create impactful projects.</p>
+      </div>
     </div>
   );
 }
@@ -143,7 +146,6 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
         onResult?.("Passwords do not match.");
         return;
       }
-      // Sign up
       const { error, data } = await supabase.auth.signUp({ email, password });
       if (error) {
         setErr(error.message);
@@ -157,7 +159,6 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
         onResult?.("Sign up failed. Try again later.");
         return;
       }
-      // Insert profile as 'pending'
       try {
         await supabase.from("profiles").upsert(
           [{
@@ -180,7 +181,6 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
       setLoading(false);
       return;
     }
-    // Sign in
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setErr(error.message);
@@ -188,7 +188,6 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
       setLoading(false);
       return;
     }
-    // Wait for member approval
     const { data: userData } = await supabase.auth.getUser();
     const id = userData.user?.id;
     if (id) {
@@ -253,13 +252,52 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
   );
 
   return (
-    <Card className="max-w-2xl w-full mx-auto">
-      <CardHeader>
-        <CardTitle>Member {mode === "signup" ? "Sign Up" : "Sign In"}</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Card className="bg-white shadow-none border-none p-8 w-full max-w-md">
+      <div className="space-y-6">
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold">Welcome {mode === "signin" ? "Back" : "to Builders Arc"}</h1>
+          <p className="text-muted-foreground">{mode === "signin" ? "Sign in to continue building" : "Create your account to get started"}</p>
+        </div>
+        
         <form onSubmit={submit} className="space-y-4">
-          {mode === "signup" && signupFields}
+          {mode === "signup" && (
+            <>
+              <Input
+                placeholder="Name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                required={mode === "signup"}
+              />
+              <Input
+                placeholder="Age"
+                type="number"
+                min={1}
+                value={age}
+                onChange={e => setAge(e.target.value ? Number(e.target.value) : "")}
+                required={mode === "signup"}
+              />
+              <Select
+                value={gender}
+                onValueChange={setGender}
+                required={mode === "signup"}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GENDER_OPTIONS.map(opt =>
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Department"
+                value={department}
+                onChange={e => setDepartment(e.target.value)}
+                required={mode === "signup"}
+              />
+            </>
+          )}
           <Input
             placeholder="Email"
             type="email"
@@ -291,16 +329,17 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
             {loading ? "Processing..." : mode === "signup" ? "Sign Up" : "Sign In"}
           </Button>
         </form>
-        <div className="text-center mt-2">
+        <div className="text-center">
           <Button
             variant="link"
             type="button"
             onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
+            className="text-sm"
           >
-            {mode === "signup" ? "Already a member? Sign in" : "New here? Sign up"}
+            {mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"}
           </Button>
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -311,7 +350,6 @@ export default function AuthPage() {
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
   if (loading) return null;
-
   if (role === "admin" || role === "member") return <Navigate to="/" replace />;
 
   return (
@@ -319,33 +357,38 @@ export default function AuthPage() {
       <Helmet>
         <title>Builders Arc | Sign in</title>
       </Helmet>
-      <div className="min-h-screen bg-background flex flex-col justify-center items-center">
-        <BuildersArcLogo />
-        <div className="mb-4">
-          <div className="flex justify-center space-x-2">
-            <Button
-              variant={authMode === "member" ? "default" : "outline"}
-              onClick={() => { setAuthMode("member"); setErrMsg(null); }}
-            >
-              Member
-            </Button>
-            <Button
-              variant={authMode === "admin" ? "default" : "outline"}
-              onClick={() => { setAuthMode("admin"); setErrMsg(null); }}
-            >
-              Admin
-            </Button>
-          </div>
+      <div className="min-h-screen flex">
+        <div className="hidden lg:flex lg:w-1/2 bg-black text-white p-8 flex-col justify-center items-center">
+          <BuildersArcLogo />
         </div>
-        {errMsg && (
-          <div className="mb-4 text-destructive font-medium">{errMsg}</div>
-        )}
-        <div className="w-full flex justify-center">
-          {authMode === "member" ? (
-            <MemberAuth onResult={setErrMsg} />
-          ) : (
-            <AdminSignIn onResult={setErrMsg} />
-          )}
+        
+        <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6">
+          <div className="w-full max-w-md space-y-6">
+            <div className="flex justify-center space-x-2 mb-6">
+              <Button
+                variant={authMode === "member" ? "default" : "outline"}
+                onClick={() => { setAuthMode("member"); setErrMsg(null); }}
+              >
+                Member
+              </Button>
+              <Button
+                variant={authMode === "admin" ? "default" : "outline"}
+                onClick={() => { setAuthMode("admin"); setErrMsg(null); }}
+              >
+                Admin
+              </Button>
+            </div>
+            {errMsg && (
+              <div className="text-center mb-4">
+                <p className="text-destructive font-medium">{errMsg}</p>
+              </div>
+            )}
+            {authMode === "member" ? (
+              <MemberAuth onResult={setErrMsg} />
+            ) : (
+              <AdminSignIn onResult={setErrMsg} />
+            )}
+          </div>
         </div>
       </div>
     </>
