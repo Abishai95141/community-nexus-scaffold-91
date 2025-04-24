@@ -182,6 +182,7 @@ function MemberAuth({
           age: typeof age === "string" ? parseInt(age, 10) : age,
           gender,
           department,
+          email,
           status: "pending"
         }], {
           onConflict: "id"

@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      approval_history: {
+        Row: {
+          admin_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_history_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approval_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idea_votes: {
         Row: {
           created_at: string | null
@@ -79,6 +121,7 @@ export type Database = {
           age: number
           created_at: string
           department: string
+          email: string | null
           gender: string
           id: string
           name: string
@@ -89,6 +132,7 @@ export type Database = {
           age: number
           created_at?: string
           department: string
+          email?: string | null
           gender: string
           id: string
           name: string
@@ -99,6 +143,7 @@ export type Database = {
           age?: number
           created_at?: string
           department?: string
+          email?: string | null
           gender?: string
           id?: string
           name?: string
