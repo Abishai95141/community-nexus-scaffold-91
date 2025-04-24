@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Navigate } from "react-router-dom";
@@ -176,7 +175,9 @@ function MemberAuth({
 
       try {
         console.log("Creating profile with status: pending");
-        const { error: profileError } = await supabase.from("profiles").upsert([{
+        console.log("User ID:", data.user.id);
+        
+        const { error: profileError } = await supabase.from("profiles").insert([{
           id: data.user.id,
           name,
           age: typeof age === "string" ? parseInt(age, 10) : age,
@@ -184,9 +185,7 @@ function MemberAuth({
           department,
           email,
           status: "pending"
-        }], {
-          onConflict: "id"
-        });
+        }]);
         
         if (profileError) {
           console.error("Error creating profile:", profileError);
@@ -195,6 +194,8 @@ function MemberAuth({
           setLoading(false);
           return;
         }
+        
+        console.log("Profile created successfully");
         
         await supabase.auth.signOut();
         
@@ -243,7 +244,6 @@ function MemberAuth({
       
       if (profile?.status === "pending") {
         setErr(null);
-        // Do not navigate away - show pending status UI
         await supabase.auth.signOut();
         setLoading(false);
         setSignupSuccess(true);
@@ -252,7 +252,6 @@ function MemberAuth({
       
       if (profile?.status === "rejected") {
         setErr(null);
-        // Do not navigate away - show rejected status UI
         await supabase.auth.signOut();
         setLoading(false);
         setSignupSuccess(true);
@@ -271,12 +270,10 @@ function MemberAuth({
     setLoading(false);
   };
 
-  // Determine what status to show
   let accountStatus: "success" | "pending" | "rejected" = "success";
   if (signupSuccess && mode === "signup") {
     accountStatus = "success"; // New signup
   } else if (signupSuccess && mode === "signin") {
-    // For signin attempts, check the profile status
     if (profileStatus === "pending") {
       accountStatus = "pending";
     } else if (profileStatus === "rejected") {
@@ -348,17 +345,12 @@ export default function AuthPage() {
 
   console.log("AuthPage rendering with:", { role, loading, profileStatus });
 
-  // Show loading indicator while checking auth status
   if (loading) return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
   
-  // If user is fully authenticated with approved status, redirect to home
   if (role === "admin" || (role === "member" && profileStatus === "approved")) {
     return <Navigate to="/" replace />;
   }
   
-  // If user has pending/rejected status, show auth page with appropriate message
-  // This allows the AuthStatus component to handle the UI for these cases
-
   return <>
     <Helmet>
       <title>Builders Arc | Sign in</title>

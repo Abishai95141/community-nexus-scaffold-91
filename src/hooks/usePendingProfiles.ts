@@ -10,7 +10,23 @@ export function usePendingProfiles() {
     queryKey: ["pending-profiles"],
     queryFn: async () => {
       console.log("Fetching pending profiles...");
-      // Make sure to enable debugging to see what's happening
+      
+      // Make sure we're fetching with proper authentication
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        console.error("No authenticated session found");
+        throw new Error("Authentication required");
+      }
+      
+      // Check if user is admin
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        throw new Error("User data not available");
+      }
+      
+      console.log("Authenticated user:", userData.user.id);
+      
+      // Fetch pending profiles
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -27,7 +43,9 @@ export function usePendingProfiles() {
         throw error;
       }
       
-      console.log("Pending profiles fetched:", data);
+      console.log("Pending profiles fetched:", data?.length || 0, "profiles found");
+      console.log("Profiles data:", data);
+      
       return data || [];
     },
     refetchInterval: 10000, // Refetch every 10 seconds to keep data updated

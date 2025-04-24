@@ -60,6 +60,32 @@ export function useAuthUser() {
         // If admin, always set status to approved (admins don't need approval)
         if (role === "admin") {
           profileStatus = "approved";
+          
+          // Ensure admin has an approved profile
+          const { data: adminProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", user.id)
+            .maybeSingle();
+            
+          if (!adminProfile) {
+            // Create admin profile if it doesn't exist
+            await supabase.from("profiles").insert([{
+              id: user.id,
+              name: "Admin",
+              email: user.email,
+              age: 30,
+              gender: "Other",
+              department: "Administration",
+              status: "approved"
+            }]);
+          } else {
+            // Ensure admin status is always approved
+            await supabase
+              .from("profiles")
+              .update({ status: "approved" })
+              .eq("id", user.id);
+          }
         }
         
         // If member but no profile status found, set to pending as default
