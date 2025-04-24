@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,9 +48,11 @@ export default function Header({ className }: { className?: string }) {
             to="/" 
             className="flex items-center space-x-2"
           >
-            <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">BA</span>
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="Builders Arc Logo" 
+              className="h-8 w-8 rounded-md"
+            />
             <span className="font-bold hidden sm:inline-block text-lg">Builders Arc</span>
           </Link>
         </div>
