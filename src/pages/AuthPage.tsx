@@ -7,29 +7,27 @@ import { Card } from "@/components/ui/card";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { Helmet } from "react-helmet";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-
 function BuildersArcLogo() {
-  return (
-    <div className="flex flex-col items-center">
+  return <div className="flex flex-col items-center">
       <div className="h-20 w-auto">
-        <img src="/lovable-uploads/fee84714-0da6-4e05-817a-e53bfd098f17.png" alt="Builders Arc" className="h-full w-auto" />
+        <img alt="Builders Arc" src="/lovable-uploads/8cbf02e4-ab37-47e4-b23e-c855f36f8880.png" className="h-full w-auto object-fill" />
       </div>
       <div className="mt-6 text-center space-y-4">
         <h2 className="text-2xl font-semibold">Join our community of builders and innovators.</h2>
         <p className="text-lg opacity-80">Connect, collaborate, and create impactful projects.</p>
       </div>
-    </div>
-  );
+    </div>;
 }
-
-function AdminSignIn({ onResult }: { onResult?: (err: string | null) => void }) {
+function AdminSignIn({
+  onResult
+}: {
+  onResult?: (err: string | null) => void;
+}) {
   const [email] = useState("abishaioff@gmail.com");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -39,65 +37,62 @@ function AdminSignIn({ onResult }: { onResult?: (err: string | null) => void }) 
       setLoading(false);
       return;
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const {
+      error
+    } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
     if (error) {
       setError(error.message);
       onResult?.(error.message);
     } else {
-      const { data: userData } = await supabase.auth.getUser();
+      const {
+        data: userData
+      } = await supabase.auth.getUser();
       if (userData.user) {
-        await supabase.from("user_roles").upsert(
-          [{ user_id: userData.user.id, role: "admin" }],
-          { onConflict: "user_id,role" }
-        );
+        await supabase.from("user_roles").upsert([{
+          user_id: userData.user.id,
+          role: "admin"
+        }], {
+          onConflict: "user_id,role"
+        });
       }
       onResult?.(null);
       navigate("/");
     }
     setLoading(false);
   };
-
-  return (
-    <Card className="max-w-md mx-auto">
+  return <Card className="max-w-md mx-auto">
       <CardHeader>
         <CardTitle>Admin Sign In</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSignIn} className="space-y-4">
           <Input value={email} disabled className="text-gray-400 bg-muted" />
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
+          <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
           {error && <p className="text-destructive text-sm">{error}</p>}
           <Button type="submit" className="w-full" disabled={loading}>Sign In</Button>
         </form>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 }
-
-const GENDER_OPTIONS = [
-  { value: "Male", label: "Male" },
-  { value: "Female", label: "Female" },
-  { value: "Other", label: "Other" },
-];
-
-const DEPARTMENT_OPTIONS = [
-  "Engineering",
-  "Design",
-  "Product",
-  "Marketing",
-  "Sales",
-  "HR",
-  "Other",
-];
-
-function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
+const GENDER_OPTIONS = [{
+  value: "Male",
+  label: "Male"
+}, {
+  value: "Female",
+  label: "Female"
+}, {
+  value: "Other",
+  label: "Other"
+}];
+const DEPARTMENT_OPTIONS = ["Engineering", "Design", "Product", "Marketing", "Sales", "HR", "Other"];
+function MemberAuth({
+  onResult
+}: {
+  onResult?: (err: string | null) => void;
+}) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -108,9 +103,7 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
   const [department, setDepartment] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -146,7 +139,13 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
         onResult?.("Passwords do not match.");
         return;
       }
-      const { error, data } = await supabase.auth.signUp({ email, password });
+      const {
+        error,
+        data
+      } = await supabase.auth.signUp({
+        email,
+        password
+      });
       if (error) {
         setErr(error.message);
         onResult?.(error.message);
@@ -160,17 +159,16 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
         return;
       }
       try {
-        await supabase.from("profiles").upsert(
-          [{
-            id: data.user.id,
-            name,
-            age: typeof age === "string" ? parseInt(age, 10) : age,
-            gender,
-            department,
-            status: "pending",
-          }],
-          { onConflict: "id" }
-        );
+        await supabase.from("profiles").upsert([{
+          id: data.user.id,
+          name,
+          age: typeof age === "string" ? parseInt(age, 10) : age,
+          gender,
+          department,
+          status: "pending"
+        }], {
+          onConflict: "id"
+        });
         onResult?.(null);
         alert("Signup request submitted! Await admin approval.");
         navigate("/auth");
@@ -181,17 +179,26 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
       setLoading(false);
       return;
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const {
+      error
+    } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
     if (error) {
       setErr(error.message);
       onResult?.(error.message);
       setLoading(false);
       return;
     }
-    const { data: userData } = await supabase.auth.getUser();
+    const {
+      data: userData
+    } = await supabase.auth.getUser();
     const id = userData.user?.id;
     if (id) {
-      const { data: profile } = await supabase.from("profiles").select("status").eq("id", id).maybeSingle();
+      const {
+        data: profile
+      } = await supabase.from("profiles").select("status").eq("id", id).maybeSingle();
       if (profile?.status === "pending") {
         setErr("Your signup is pending admin approval.");
         setLoading(false);
@@ -211,48 +218,20 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
     navigate("/");
     setLoading(false);
   };
-
-  const signupFields = (
-    <>
-      <Input
-        placeholder="Name"
-        value={name}
-        onChange={e => setName(e.target.value)}
-        required={mode === "signup"}
-      />
-      <Input
-        placeholder="Age"
-        type="number"
-        min={1}
-        value={age}
-        onChange={e => setAge(e.target.value ? Number(e.target.value) : "")}
-        required={mode === "signup"}
-      />
-      <Select
-        value={gender}
-        onValueChange={setGender}
-        required={mode === "signup"}
-      >
+  const signupFields = <>
+      <Input placeholder="Name" value={name} onChange={e => setName(e.target.value)} required={mode === "signup"} />
+      <Input placeholder="Age" type="number" min={1} value={age} onChange={e => setAge(e.target.value ? Number(e.target.value) : "")} required={mode === "signup"} />
+      <Select value={gender} onValueChange={setGender} required={mode === "signup"}>
         <SelectTrigger>
           <SelectValue placeholder="Select Gender" />
         </SelectTrigger>
         <SelectContent>
-          {GENDER_OPTIONS.map(opt =>
-            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-          )}
+          {GENDER_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
         </SelectContent>
       </Select>
-      <Input
-        placeholder="Department"
-        value={department}
-        onChange={e => setDepartment(e.target.value)}
-        required={mode === "signup"}
-      />
-    </>
-  );
-
-  return (
-    <Card className="bg-white shadow-none border-none p-8 w-full max-w-md">
+      <Input placeholder="Department" value={department} onChange={e => setDepartment(e.target.value)} required={mode === "signup"} />
+    </>;
+  return <Card className="bg-white shadow-none border-none p-8 w-full max-w-md">
       <div className="space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">Welcome {mode === "signin" ? "Back" : "to Builders Arc"}</h1>
@@ -260,100 +239,45 @@ function MemberAuth({ onResult }: { onResult?: (err: string | null) => void }) {
         </div>
         
         <form onSubmit={submit} className="space-y-4">
-          {mode === "signup" && (
-            <>
-              <Input
-                placeholder="Name"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                required={mode === "signup"}
-              />
-              <Input
-                placeholder="Age"
-                type="number"
-                min={1}
-                value={age}
-                onChange={e => setAge(e.target.value ? Number(e.target.value) : "")}
-                required={mode === "signup"}
-              />
-              <Select
-                value={gender}
-                onValueChange={setGender}
-                required={mode === "signup"}
-              >
+          {mode === "signup" && <>
+              <Input placeholder="Name" value={name} onChange={e => setName(e.target.value)} required={mode === "signup"} />
+              <Input placeholder="Age" type="number" min={1} value={age} onChange={e => setAge(e.target.value ? Number(e.target.value) : "")} required={mode === "signup"} />
+              <Select value={gender} onValueChange={setGender} required={mode === "signup"}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Gender" />
                 </SelectTrigger>
                 <SelectContent>
-                  {GENDER_OPTIONS.map(opt =>
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  )}
+                  {GENDER_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Input
-                placeholder="Department"
-                value={department}
-                onChange={e => setDepartment(e.target.value)}
-                required={mode === "signup"}
-              />
-            </>
-          )}
-          <Input
-            placeholder="Email"
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            autoComplete="username"
-            required
-          />
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            autoComplete={mode === "signup" ? "new-password" : "current-password"}
-          />
-          {mode === "signup" && (
-            <Input
-              type="password"
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-            />
-          )}
+              <Input placeholder="Department" value={department} onChange={e => setDepartment(e.target.value)} required={mode === "signup"} />
+            </>}
+          <Input placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" required />
+          <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete={mode === "signup" ? "new-password" : "current-password"} />
+          {mode === "signup" && <Input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required autoComplete="new-password" />}
           {err && <p className="text-destructive text-sm">{err}</p>}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Processing..." : mode === "signup" ? "Sign Up" : "Sign In"}
           </Button>
         </form>
         <div className="text-center">
-          <Button
-            variant="link"
-            type="button"
-            onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-            className="text-sm"
-          >
+          <Button variant="link" type="button" onClick={() => setMode(mode === "signup" ? "signin" : "signup")} className="text-sm">
             {mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"}
           </Button>
         </div>
       </div>
-    </Card>
-  );
+    </Card>;
 }
-
 export default function AuthPage() {
-  const { role, loading } = useAuthUser();
+  const {
+    role,
+    loading
+  } = useAuthUser();
   const [authMode, setAuthMode] = useState<"admin" | "member">("member");
   const [errMsg, setErrMsg] = useState<string | null>(null);
-
   if (loading) return null;
   if (role === "admin" || role === "member") return <Navigate to="/" replace />;
-
-  return (
-    <>
+  return <>
       <Helmet>
         <title>Builders Arc | Sign in</title>
       </Helmet>
@@ -365,32 +289,25 @@ export default function AuthPage() {
         <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6">
           <div className="w-full max-w-md space-y-6">
             <div className="flex justify-center space-x-2 mb-6">
-              <Button
-                variant={authMode === "member" ? "default" : "outline"}
-                onClick={() => { setAuthMode("member"); setErrMsg(null); }}
-              >
+              <Button variant={authMode === "member" ? "default" : "outline"} onClick={() => {
+              setAuthMode("member");
+              setErrMsg(null);
+            }}>
                 Member
               </Button>
-              <Button
-                variant={authMode === "admin" ? "default" : "outline"}
-                onClick={() => { setAuthMode("admin"); setErrMsg(null); }}
-              >
+              <Button variant={authMode === "admin" ? "default" : "outline"} onClick={() => {
+              setAuthMode("admin");
+              setErrMsg(null);
+            }}>
                 Admin
               </Button>
             </div>
-            {errMsg && (
-              <div className="text-center mb-4">
+            {errMsg && <div className="text-center mb-4">
                 <p className="text-destructive font-medium">{errMsg}</p>
-              </div>
-            )}
-            {authMode === "member" ? (
-              <MemberAuth onResult={setErrMsg} />
-            ) : (
-              <AdminSignIn onResult={setErrMsg} />
-            )}
+              </div>}
+            {authMode === "member" ? <MemberAuth onResult={setErrMsg} /> : <AdminSignIn onResult={setErrMsg} />}
           </div>
         </div>
       </div>
-    </>
-  );
+    </>;
 }
