@@ -7,6 +7,7 @@ interface AuthUserState {
   session: any;
   user: any;
   role: "admin" | "member" | null;
+  profileStatus: "pending" | "approved" | "rejected" | null;
 }
 
 export function useAuthUser() {
@@ -15,6 +16,7 @@ export function useAuthUser() {
     session: null,
     user: null,
     role: null,
+    profileStatus: null,
   });
 
   useEffect(() => {
@@ -26,6 +28,8 @@ export function useAuthUser() {
       const user = session?.user || null;
 
       let role: "admin" | "member" | null = null;
+      let profileStatus: "pending" | "approved" | "rejected" | null = null;
+      
       if (user) {
         // Check user_roles table for role
         const { data: roles } = await supabase
@@ -36,9 +40,18 @@ export function useAuthUser() {
         role = roles?.length
           ? (roles[0].role as "admin" | "member")
           : (user.email === "abishaioff@gmail.com" ? "admin" : "member");
+          
+        // Get profile status
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("status")
+          .eq("id", user.id)
+          .maybeSingle();
+          
+        profileStatus = profile?.status as "pending" | "approved" | "rejected" | null;
       }
 
-      setState({ session, user, role, loading: false });
+      setState({ session, user, role, profileStatus, loading: false });
     };
 
     // Set up listener

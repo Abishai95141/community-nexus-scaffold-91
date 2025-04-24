@@ -24,9 +24,12 @@ export function PendingRequests() {
   const [pendingAction, setPendingAction] = useState<"approved" | "rejected" | null>(null);
   const { toast } = useToast();
   
+  console.log("PendingRequests component rendering with profiles:", profiles);
+  
   const handleViewDetails = (profile: any) => {
     setSelectedProfile(profile);
     setIsDialogOpen(true);
+    setPendingAction(null);
   };
 
   const handleApproveReject = async (status: "approved" | "rejected") => {
@@ -96,7 +99,7 @@ export function PendingRequests() {
   };
 
   if (isLoading) return <div className="p-4">Loading signup requests...</div>;
-  if (error) return <div className="p-4 text-destructive">Error loading requests</div>;
+  if (error) return <div className="p-4 text-destructive">Error loading requests: {String(error)}</div>;
 
   if (!profiles?.length)
     return <div className="p-4 text-muted-foreground">No pending signup requests.</div>;

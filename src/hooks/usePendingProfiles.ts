@@ -6,6 +6,7 @@ export function usePendingProfiles() {
   return useQuery({
     queryKey: ["pending-profiles"],
     queryFn: async () => {
+      console.log("Fetching pending profiles...");
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -17,6 +18,7 @@ export function usePendingProfiles() {
         throw error;
       }
       
+      console.log("Pending profiles fetched:", data);
       return data || [];
     },
   });

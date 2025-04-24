@@ -21,25 +21,37 @@ import { useNavigate } from "react-router-dom";
 const queryClient = new QueryClient();
 
 function AppRoutes() {
-  const { role, loading } = useAuthUser();
+  const { role, loading, profileStatus } = useAuthUser();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Redirect unauthenticated users to /auth (make it the landing page).
+  // Redirect users based on authentication status and profile status
   useEffect(() => {
+    console.log("Auth state changed:", { role, loading, profileStatus, location: location.pathname });
+    
     // No role but not loading and not on /auth, redirect to auth
     if (!loading && !role && location.pathname !== "/auth") {
       navigate("/auth", { replace: true });
+      return;
     }
-    // If logged in and on /auth, redirect to Home
+    
+    // If logged in with pending/rejected status and on /auth, don't redirect
+    if (!loading && !role && profileStatus && location.pathname === "/auth") {
+      return;
+    }
+    
+    // If logged in with active status and on /auth, redirect to Home
     if (!loading && !!role && location.pathname === "/auth") {
       navigate("/", { replace: true });
+      return;
     }
+    
     // If not admin and trying to access /admin, redirect to Home
     if (!loading && location.pathname.startsWith("/admin") && role !== "admin") {
       navigate("/", { replace: true });
+      return;
     }
-  }, [role, loading, location, navigate]);
+  }, [role, loading, profileStatus, location, navigate]);
 
   return (
     <Routes>

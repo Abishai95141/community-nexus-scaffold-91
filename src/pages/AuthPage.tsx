@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Navigate } from "react-router-dom";
@@ -83,18 +84,9 @@ function AdminSignIn({
 }
 
 const GENDER_OPTIONS = [
-  {
-    value: "Male",
-    label: "Male"
-  },
-  {
-    value: "Female",
-    label: "Female"
-  },
-  {
-    value: "Other",
-    label: "Other"
-  }
+  { value: "Male", label: "Male" },
+  { value: "Female", label: "Female" },
+  { value: "Other", label: "Other" }
 ];
 
 const DEPARTMENT_OPTIONS = ["Engineering", "Design", "Product", "Marketing", "Sales", "HR", "Other"];
@@ -115,7 +107,7 @@ function MemberAuth({
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
-  const [accountStatus, setAccountStatus] = useState<"success" | "pending" | "rejected" | null>(null);
+  const { profileStatus } = useAuthUser();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -198,7 +190,6 @@ function MemberAuth({
         await supabase.auth.signOut();
         
         setSignupSuccess(true);
-        setAccountStatus("success");
         onResult?.(null);
       } catch (errUpsert) {
         setErr("Error saving your profile. Please contact support.");
@@ -238,17 +229,19 @@ function MemberAuth({
       
       if (profile?.status === "pending") {
         setErr(null);
-        setAccountStatus("pending");
+        // Do not navigate away - show pending status UI
         await supabase.auth.signOut();
         setLoading(false);
+        setSignupSuccess(true);
         return;
       }
       
       if (profile?.status === "rejected") {
         setErr(null);
-        setAccountStatus("rejected");
+        // Do not navigate away - show rejected status UI
         await supabase.auth.signOut();
         setLoading(false);
+        setSignupSuccess(true);
         return;
       }
       
@@ -264,16 +257,28 @@ function MemberAuth({
     setLoading(false);
   };
 
-  if (signupSuccess || accountStatus) {
+  // Determine what status to show
+  let accountStatus: "success" | "pending" | "rejected" = "success";
+  if (signupSuccess && mode === "signup") {
+    accountStatus = "success"; // New signup
+  } else if (signupSuccess && mode === "signin") {
+    // For signin attempts, check the profile status
+    if (profileStatus === "pending") {
+      accountStatus = "pending";
+    } else if (profileStatus === "rejected") {
+      accountStatus = "rejected";
+    }
+  }
+
+  if (signupSuccess) {
     return (
       <Card className="bg-white shadow-none border-none p-8 w-full max-w-md">
         <AuthStatus 
-          type={accountStatus || "success"} 
+          type={accountStatus}
         />
         <Button 
           onClick={() => {
             setSignupSuccess(false);
-            setAccountStatus(null);
             setMode("signin");
           }}
           className="mt-6 w-full"
@@ -323,12 +328,22 @@ function MemberAuth({
 }
 
 export default function AuthPage() {
-  const { role, loading } = useAuthUser();
+  const { role, loading, profileStatus } = useAuthUser();
   const [authMode, setAuthMode] = useState<"admin" | "member">("member");
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
-  if (loading) return null;
-  if (role === "admin" || role === "member") return <Navigate to="/" replace />;
+  console.log("AuthPage rendering with:", { role, loading, profileStatus });
+
+  // Show loading indicator while checking auth status
+  if (loading) return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  
+  // If user is fully authenticated with approved status, redirect to home
+  if (role === "admin" || (role === "member" && profileStatus === "approved")) {
+    return <Navigate to="/" replace />;
+  }
+  
+  // If user has pending/rejected status, show auth page with appropriate message
+  // This allows the AuthStatus component to handle the UI for these cases
 
   return <>
     <Helmet>
