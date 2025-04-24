@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Navigate } from "react-router-dom";
@@ -12,11 +11,9 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 function BuildersArcLogo() {
   return (
     <div className="flex flex-col items-center mb-8">
-      <img 
-        src="/logo.png" 
-        alt="Builders Arc Logo" 
-        className="h-24 w-24 rounded-full mb-3 object-cover shadow-lg"
-      />
+      <div className="bg-primary text-primary-foreground rounded-full h-24 w-24 flex items-center justify-center mb-3 text-4xl font-extrabold shadow-lg">
+        BA
+      </div>
       <span className="font-extrabold text-4xl tracking-tighter">Builders Arc</span>
     </div>
   );
