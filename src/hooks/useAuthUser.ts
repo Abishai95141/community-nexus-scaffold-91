@@ -31,6 +31,8 @@ export function useAuthUser() {
       let profileStatus: "pending" | "approved" | "rejected" | null = null;
       
       if (user) {
+        console.log("User authenticated:", user.id);
+        
         // Check user_roles table for role
         const { data: roles } = await supabase
           .from("user_roles")
@@ -42,13 +44,28 @@ export function useAuthUser() {
           : (user.email === "abishaioff@gmail.com" ? "admin" : "member");
           
         // Get profile status
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("status")
           .eq("id", user.id)
           .maybeSingle();
           
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+        }
+        
+        console.log("Profile status found:", profile?.status);
         profileStatus = profile?.status as "pending" | "approved" | "rejected" | null;
+        
+        // If admin, always set status to approved (admins don't need approval)
+        if (role === "admin") {
+          profileStatus = "approved";
+        }
+        
+        // If member but no profile status found, set to pending as default
+        if (role === "member" && !profileStatus) {
+          profileStatus = "pending";
+        }
       }
 
       setState({ session, user, role, profileStatus, loading: false });
@@ -58,6 +75,7 @@ export function useAuthUser() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       getSessionAndRole();
     });
+    
     // Initial load
     getSessionAndRole();
 

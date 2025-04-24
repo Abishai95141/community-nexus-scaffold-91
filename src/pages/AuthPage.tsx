@@ -175,7 +175,8 @@ function MemberAuth({
       }
 
       try {
-        await supabase.from("profiles").upsert([{
+        console.log("Creating profile with status: pending");
+        const { error: profileError } = await supabase.from("profiles").upsert([{
           id: data.user.id,
           name,
           age: typeof age === "string" ? parseInt(age, 10) : age,
@@ -187,11 +188,24 @@ function MemberAuth({
           onConflict: "id"
         });
         
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+          setErr("Error creating your profile: " + profileError.message);
+          onResult?.("Error creating your profile: " + profileError.message);
+          setLoading(false);
+          return;
+        }
+        
         await supabase.auth.signOut();
         
         setSignupSuccess(true);
         onResult?.(null);
+        toast({
+          title: "Signup successful",
+          description: "Your account is pending approval by an administrator.",
+        });
       } catch (errUpsert) {
+        console.error("Error saving profile:", errUpsert);
         setErr("Error saving your profile. Please contact support.");
         onResult?.("Error saving your profile. Please contact support.");
       }

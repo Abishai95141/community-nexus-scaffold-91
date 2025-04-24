@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function PendingRequests() {
   const { data: profiles, isLoading, error, refetch } = usePendingProfiles();
@@ -98,58 +99,109 @@ export function PendingRequests() {
     });
   };
 
-  if (isLoading) return <div className="p-4">Loading signup requests...</div>;
-  if (error) return <div className="p-4 text-destructive">Error loading requests: {String(error)}</div>;
+  // Manually trigger a refetch to ensure we have the latest data
+  const handleManualRefresh = () => {
+    refetch();
+    toast({
+      title: "Refreshing",
+      description: "Looking for new signup requests...",
+    });
+  };
 
-  if (!profiles?.length)
-    return <div className="p-4 text-muted-foreground">No pending signup requests.</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <div className="flex justify-end">
+          <Button size="sm" variant="outline" disabled>Refreshing...</Button>
+        </div>
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="border rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Skeleton className="h-4 w-32 mb-2" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-8 w-24" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) return (
+    <>
+      <div className="p-4 text-destructive border border-destructive/30 rounded-md bg-destructive/10 mb-4">
+        Error loading requests: {String(error)}
+      </div>
+      <Button onClick={handleManualRefresh} size="sm" variant="outline">
+        Try Again
+      </Button>
+    </>
+  );
 
   return (
     <div className="space-y-2">
-      {profiles.map((profile: any) => (
-        <div key={profile.id} className="flex items-center justify-between border rounded-lg p-3">
-          <div>
-            <div className="font-medium">{profile.name}</div>
-            <div className="text-xs text-muted-foreground">
-              Email: {profile.email || "-"} • Age: {profile.age} • Gender: {profile.gender} • Dept: {profile.department}
+      <div className="flex justify-end mb-4">
+        <Button size="sm" variant="outline" onClick={handleManualRefresh}>
+          Refresh Requests
+        </Button>
+      </div>
+      
+      {!profiles?.length ? (
+        <div className="p-6 text-center text-muted-foreground border rounded-lg">
+          <p className="mb-3">No pending signup requests.</p>
+          <p className="text-sm">New signup requests will appear here for your approval.</p>
+        </div>
+      ) : (
+        profiles.map((profile: any) => (
+          <div key={profile.id} className="flex items-center justify-between border rounded-lg p-3">
+            <div>
+              <div className="font-medium">{profile.name}</div>
+              <div className="text-xs text-muted-foreground">
+                Email: {profile.email || "-"} • Age: {profile.age} • Gender: {profile.gender} • Dept: {profile.department}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleViewDetails(profile)}
+              >
+                <Eye className="mr-1 w-4 h-4" /> Details
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="bg-green-500 hover:bg-green-600 text-white"
+                disabled={actionLoading === profile.id + "approved"}
+                onClick={() => {
+                  setSelectedProfile(profile);
+                  handleApproveReject("approved");
+                  setIsDialogOpen(true);
+                }}
+              >
+                <Check className="mr-1 w-4 h-4" /> Accept
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={actionLoading === profile.id + "rejected"}
+                onClick={() => {
+                  setSelectedProfile(profile);
+                  handleApproveReject("rejected");
+                  setIsDialogOpen(true);
+                }}
+              >
+                <X className="mr-1 w-4 h-4" /> Reject
+              </Button>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleViewDetails(profile)}
-            >
-              <Eye className="mr-1 w-4 h-4" /> Details
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-green-500 hover:bg-green-600 text-white"
-              disabled={actionLoading === profile.id + "approved"}
-              onClick={() => {
-                setSelectedProfile(profile);
-                handleApproveReject("approved");
-                setIsDialogOpen(true);
-              }}
-            >
-              <Check className="mr-1 w-4 h-4" /> Accept
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              disabled={actionLoading === profile.id + "rejected"}
-              onClick={() => {
-                setSelectedProfile(profile);
-                handleApproveReject("rejected");
-                setIsDialogOpen(true);
-              }}
-            >
-              <X className="mr-1 w-4 h-4" /> Reject
-            </Button>
-          </div>
-        </div>
-      ))}
+        ))
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">

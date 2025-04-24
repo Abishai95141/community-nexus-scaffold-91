@@ -18,7 +18,14 @@ import { useAuthUser } from "./hooks/useAuthUser";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: true,
+      retry: 1,
+    },
+  },
+});
 
 function AppRoutes() {
   const { role, loading, profileStatus } = useAuthUser();
@@ -29,25 +36,33 @@ function AppRoutes() {
   useEffect(() => {
     console.log("Auth state changed:", { role, loading, profileStatus, location: location.pathname });
     
-    // No role but not loading and not on /auth, redirect to auth
-    if (!loading && !role && location.pathname !== "/auth") {
+    // Still loading, don't redirect yet
+    if (loading) {
+      return;
+    }
+
+    // Not logged in and not on auth page, redirect to auth
+    if (!role && location.pathname !== "/auth") {
       navigate("/auth", { replace: true });
       return;
     }
     
-    // If logged in with pending/rejected status and on /auth, don't redirect
-    if (!loading && !role && profileStatus && location.pathname === "/auth") {
+    // Has pending/rejected profile status - stay on auth page
+    if (profileStatus === "pending" || profileStatus === "rejected") {
+      if (location.pathname !== "/auth") {
+        navigate("/auth", { replace: true });
+      }
       return;
     }
     
-    // If logged in with active status and on /auth, redirect to Home
-    if (!loading && !!role && location.pathname === "/auth") {
+    // If logged in with approved status and on /auth, redirect to Home
+    if (role && profileStatus === "approved" && location.pathname === "/auth") {
       navigate("/", { replace: true });
       return;
     }
     
     // If not admin and trying to access /admin, redirect to Home
-    if (!loading && location.pathname.startsWith("/admin") && role !== "admin") {
+    if (location.pathname.startsWith("/admin") && role !== "admin") {
       navigate("/", { replace: true });
       return;
     }
