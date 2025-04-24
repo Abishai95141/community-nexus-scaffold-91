@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Navigate } from "react-router-dom";
@@ -8,6 +7,7 @@ import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { Helmet } from "react-helmet";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Check } from "lucide-react";
 
 function BuildersArcLogo() {
   return <div className="flex flex-col items-center">
@@ -187,7 +187,6 @@ function MemberAuth({
           onConflict: "id"
         });
         
-        // Display success message instead of alert
         setSignupSuccess(true);
         onResult?.(null);
       } catch (errUpsert) {
