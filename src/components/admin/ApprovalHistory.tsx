@@ -60,8 +60,8 @@ export function ApprovalHistory() {
                 </TableCell>
                 <TableCell>
                   <Badge 
-                    variant={item.status === 'approved' ? 'success' : 'destructive'}
-                    className={item.status === 'approved' ? 'bg-green-500' : ''}
+                    variant={item.status === 'approved' ? 'default' : 'destructive'}
+                    className={item.status === 'approved' ? 'bg-green-500 hover:bg-green-600' : ''}
                   >
                     {item.status}
                   </Badge>
