@@ -7,7 +7,8 @@ import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { Helmet } from "react-helmet";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Check } from "lucide-react";
+import { AuthStatus } from "@/components/auth/AuthStatus";
+import { useToast } from "@/hooks/use-toast";
 
 function BuildersArcLogo() {
   return <div className="flex flex-col items-center">
@@ -110,7 +111,9 @@ function MemberAuth({
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [accountStatus, setAccountStatus] = useState<"success" | "pending" | "rejected" | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,7 +191,10 @@ function MemberAuth({
           onConflict: "id"
         });
         
+        await supabase.auth.signOut();
+        
         setSignupSuccess(true);
+        setAccountStatus("success");
         onResult?.(null);
       } catch (errUpsert) {
         setErr("Error saving your profile. Please contact support.");
@@ -223,89 +229,89 @@ function MemberAuth({
       } = await supabase.from("profiles").select("status").eq("id", id).maybeSingle();
       
       if (profile?.status === "pending") {
-        setErr("Your signup is pending admin approval.");
-        setLoading(false);
-        onResult?.("Your signup is pending admin approval.");
+        setErr(null);
+        setAccountStatus("pending");
         await supabase.auth.signOut();
+        setLoading(false);
         return;
       }
       
       if (profile?.status === "rejected") {
-        setErr("Your signup has been rejected.");
-        setLoading(false);
-        onResult?.("Your signup has been rejected.");
+        setErr(null);
+        setAccountStatus("rejected");
         await supabase.auth.signOut();
+        setLoading(false);
         return;
       }
+      
+      toast({
+        title: "Login successful",
+        description: "Welcome back to Builders Arc!",
+      });
+      
+      onResult?.(null);
+      navigate("/");
     }
-
-    onResult?.(null);
-    navigate("/");
+    
     setLoading(false);
   };
 
-  if (signupSuccess) {
+  if (signupSuccess || accountStatus) {
     return (
       <Card className="bg-white shadow-none border-none p-8 w-full max-w-md">
-        <div className="space-y-6 text-center">
-          <div className="mx-auto bg-green-100 rounded-full p-3 w-16 h-16 flex items-center justify-center">
-            <Check className="h-8 w-8 text-green-600" />
-          </div>
-          <h2 className="text-2xl font-bold">Signup Request Submitted</h2>
-          <p className="text-muted-foreground">
-            Thank you for signing up! Your request has been received and is pending admin approval.
-            You will be able to access the platform once your request is approved.
-          </p>
-          <Button 
-            onClick={() => {
-              setSignupSuccess(false);
-              setMode("signin");
-            }}
-            className="mt-4"
-          >
-            Back to Sign In
-          </Button>
-        </div>
+        <AuthStatus 
+          type={accountStatus || "success"} 
+        />
+        <Button 
+          onClick={() => {
+            setSignupSuccess(false);
+            setAccountStatus(null);
+            setMode("signin");
+          }}
+          className="mt-6 w-full"
+        >
+          Back to Sign In
+        </Button>
       </Card>
     );
   }
 
   return <Card className="bg-white shadow-none border-none p-8 w-full max-w-md">
-      <div className="space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Welcome {mode === "signin" ? "Back" : "to Builders Arc"}</h1>
-          <p className="text-muted-foreground">{mode === "signin" ? "Sign in to continue building" : "Create your account to get started"}</p>
-        </div>
-        
-        <form onSubmit={submit} className="space-y-4">
-          {mode === "signup" && <>
-              <Input placeholder="Name" value={name} onChange={e => setName(e.target.value)} required={mode === "signup"} />
-              <Input placeholder="Age" type="number" min={1} value={age} onChange={e => setAge(e.target.value ? Number(e.target.value) : "")} required={mode === "signup"} />
-              <Select value={gender} onValueChange={setGender} required={mode === "signup"}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  {GENDER_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Input placeholder="Department" value={department} onChange={e => setDepartment(e.target.value)} required={mode === "signup"} />
-            </>}
-          <Input placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" required />
-          <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete={mode === "signup" ? "new-password" : "current-password"} />
-          {mode === "signup" && <Input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required autoComplete="new-password" />}
-          {err && <p className="text-destructive text-sm">{err}</p>}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Processing..." : mode === "signup" ? "Sign Up" : "Sign In"}
-          </Button>
-        </form>
-        <div className="text-center">
-          <Button variant="link" type="button" onClick={() => setMode(mode === "signup" ? "signin" : "signup")} className="text-sm">
-            {mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"}
-          </Button>
-        </div>
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold">Welcome {mode === "signin" ? "Back" : "to Builders Arc"}</h1>
+        <p className="text-muted-foreground">{mode === "signin" ? "Sign in to continue building" : "Create your account to get started"}</p>
       </div>
-    </Card>;
+      
+      <form onSubmit={submit} className="space-y-4">
+        {mode === "signup" && <>
+          <Input placeholder="Name" value={name} onChange={e => setName(e.target.value)} required={mode === "signup"} />
+          <Input placeholder="Age" type="number" min={1} value={age} onChange={e => setAge(e.target.value ? Number(e.target.value) : "")} required={mode === "signup"} />
+          <Select value={gender} onValueChange={setGender} required={mode === "signup"}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Gender" />
+            </SelectTrigger>
+            <SelectContent>
+              {GENDER_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input placeholder="Department" value={department} onChange={e => setDepartment(e.target.value)} required={mode === "signup"} />
+        </>}
+        <Input placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" required />
+        <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete={mode === "signup" ? "new-password" : "current-password"} />
+        {mode === "signup" && <Input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required autoComplete="new-password" />}
+        {err && <p className="text-destructive text-sm">{err}</p>}
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? "Processing..." : mode === "signup" ? "Sign Up" : "Sign In"}
+        </Button>
+      </form>
+      <div className="text-center">
+        <Button variant="link" type="button" onClick={() => setMode(mode === "signup" ? "signin" : "signup")} className="text-sm">
+          {mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"}
+        </Button>
+      </div>
+    </div>
+  </Card>;
 }
 
 export default function AuthPage() {
@@ -317,36 +323,36 @@ export default function AuthPage() {
   if (role === "admin" || role === "member") return <Navigate to="/" replace />;
 
   return <>
-      <Helmet>
-        <title>Builders Arc | Sign in</title>
-      </Helmet>
-      <div className="min-h-screen flex">
-        <div className="hidden lg:flex lg:w-1/2 bg-black text-white p-8 flex-col justify-center items-center">
-          <BuildersArcLogo />
-        </div>
-        
-        <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6">
-          <div className="w-full max-w-md space-y-6">
-            <div className="flex justify-center space-x-2 mb-6">
-              <Button variant={authMode === "member" ? "default" : "outline"} onClick={() => {
+    <Helmet>
+      <title>Builders Arc | Sign in</title>
+    </Helmet>
+    <div className="min-h-screen flex">
+      <div className="hidden lg:flex lg:w-1/2 bg-black text-white p-8 flex-col justify-center items-center">
+        <BuildersArcLogo />
+      </div>
+      
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6">
+        <div className="w-full max-w-md space-y-6">
+          <div className="flex justify-center space-x-2 mb-6">
+            <Button variant={authMode === "member" ? "default" : "outline"} onClick={() => {
               setAuthMode("member");
               setErrMsg(null);
             }}>
-                Member
-              </Button>
-              <Button variant={authMode === "admin" ? "default" : "outline"} onClick={() => {
+              Member
+            </Button>
+            <Button variant={authMode === "admin" ? "default" : "outline"} onClick={() => {
               setAuthMode("admin");
               setErrMsg(null);
             }}>
-                Admin
-              </Button>
-            </div>
-            {errMsg && <div className="text-center mb-4">
-                <p className="text-destructive font-medium">{errMsg}</p>
-              </div>}
-            {authMode === "member" ? <MemberAuth onResult={setErrMsg} /> : <AdminSignIn onResult={setErrMsg} />}
+              Admin
+            </Button>
           </div>
+          {errMsg && <div className="text-center mb-4">
+            <p className="text-destructive font-medium">{errMsg}</p>
+          </div>}
+          {authMode === "member" ? <MemberAuth onResult={setErrMsg} /> : <AdminSignIn onResult={setErrMsg} />}
         </div>
       </div>
-    </>;
+    </div>
+  </>;
 }

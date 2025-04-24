@@ -4,9 +4,12 @@ import { Helmet } from "react-helmet";
 import { SkeletonPage } from "@/components/ui/skeleton-page";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PendingRequests } from "@/components/admin/PendingRequests";
+import { ApprovalHistory } from "@/components/admin/ApprovalHistory";
+import { Input } from "@/components/ui/input";
 
 export default function AdminPage() {
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   
   useEffect(() => {
     // Simulate loading delay
@@ -35,6 +38,7 @@ export default function AdminPage() {
           <TabsList className="mb-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="requests">Signup Requests</TabsTrigger>
+            <TabsTrigger value="history">Approval History</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -74,14 +78,39 @@ export default function AdminPage() {
               </div>
             </div>
           </TabsContent>
+          
           <TabsContent value="requests">
             <div className="border rounded-lg shadow-sm">
               <div className="p-4">
                 <h3 className="text-lg font-medium mb-3">Pending Signup Requests</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Review and approve user signup requests. Users can't log in until their accounts are approved.
+                </p>
                 <PendingRequests />
               </div>
             </div>
           </TabsContent>
+          
+          <TabsContent value="history">
+            <div className="border rounded-lg shadow-sm">
+              <div className="p-4">
+                <h3 className="text-lg font-medium mb-3">Approval History</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Track all approval and rejection actions taken by admins.
+                </p>
+                <div className="mb-4">
+                  <Input 
+                    placeholder="Search by user name or admin..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="max-w-xs"
+                  />
+                </div>
+                <ApprovalHistory />
+              </div>
+            </div>
+          </TabsContent>
+          
           <TabsContent value="users">
             <div className="border rounded-lg shadow-sm">
               <div className="p-4">
@@ -106,12 +135,14 @@ export default function AdminPage() {
               </div>
             </div>
           </TabsContent>
+          
           <TabsContent value="content" className="space-y-4">
             <div className="border rounded-lg p-4 shadow-sm">
               <h3 className="text-lg font-medium mb-2">Content Management</h3>
               <p className="text-muted-foreground text-sm">Manage community content</p>
             </div>
           </TabsContent>
+          
           <TabsContent value="settings" className="space-y-4">
             <div className="border rounded-lg p-4 shadow-sm">
               <h3 className="text-lg font-medium mb-2">Platform Settings</h3>

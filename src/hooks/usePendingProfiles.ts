@@ -11,7 +11,12 @@ export function usePendingProfiles() {
         .select("*")
         .eq("status", "pending")
         .order("created_at", { ascending: true });
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error fetching pending profiles:", error);
+        throw error;
+      }
+      
       return data;
     },
   });
