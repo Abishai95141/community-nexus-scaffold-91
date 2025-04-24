@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,8 @@ import {
   Users, 
   Layout,
   Book,
-  LayoutDashboard
+  LayoutDashboard,
+  Shield
 } from "lucide-react";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { useEffect, useState } from "react";
@@ -36,10 +36,16 @@ const navItems: NavItem[] = [
   { title: "Community", href: "/community", icon: Users },
 ];
 
+const adminItems: NavItem[] = [
+  { title: "Admin Panel", href: "/admin", icon: Shield },
+];
+
 function getNavItems(role: "admin" | "member" | null) {
-  return navItems.filter(item =>
-    item.title !== "Admin" || role === "admin"
-  );
+  const items = [...navItems];
+  if (role === "admin") {
+    items.push(...adminItems);
+  }
+  return items;
 }
 
 export function NavLinks({ className, onNavClick }: NavLinksProps) {

@@ -3,21 +3,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { Helmet } from "react-helmet";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+
 function BuildersArcLogo() {
   return <div className="flex flex-col items-center">
-      <div className="h-20 w-auto">
-        <img alt="Builders Arc" src="/lovable-uploads/8cbf02e4-ab37-47e4-b23e-c855f36f8880.png" className="h-full w-auto object-fill" />
+      <div className="h-32 w-auto">
+        <img alt="Builders Arc" src="/lovable-uploads/8cbf02e4-ab37-47e4-b23e-c855f36f8880.png" className="h-full w-auto object-contain" />
       </div>
-      <div className="mt-6 text-center space-y-4">
-        <h2 className="text-2xl font-semibold">Join our community of builders and innovators.</h2>
-        <p className="text-lg opacity-80">Connect, collaborate, and create impactful projects.</p>
+      <div className="mt-8 text-center space-y-4">
+        <h2 className="text-3xl font-semibold">Join our community of builders and innovators.</h2>
+        <p className="text-xl opacity-80">Connect, collaborate, and create impactful projects.</p>
       </div>
     </div>;
 }
+
 function AdminSignIn({
   onResult
 }: {
@@ -77,6 +79,7 @@ function AdminSignIn({
       </CardContent>
     </Card>;
 }
+
 const GENDER_OPTIONS = [{
   value: "Male",
   label: "Male"
@@ -87,7 +90,9 @@ const GENDER_OPTIONS = [{
   value: "Other",
   label: "Other"
 }];
+
 const DEPARTMENT_OPTIONS = ["Engineering", "Design", "Product", "Marketing", "Sales", "HR", "Other"];
+
 function MemberAuth({
   onResult
 }: {
@@ -268,15 +273,15 @@ function MemberAuth({
       </div>
     </Card>;
 }
+
 export default function AuthPage() {
-  const {
-    role,
-    loading
-  } = useAuthUser();
+  const { role, loading } = useAuthUser();
   const [authMode, setAuthMode] = useState<"admin" | "member">("member");
   const [errMsg, setErrMsg] = useState<string | null>(null);
+
   if (loading) return null;
   if (role === "admin" || role === "member") return <Navigate to="/" replace />;
+
   return <>
       <Helmet>
         <title>Builders Arc | Sign in</title>
