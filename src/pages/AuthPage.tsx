@@ -82,16 +82,20 @@ function AdminSignIn({
     </Card>;
 }
 
-const GENDER_OPTIONS = [{
-  value: "Male",
-  label: "Male"
-}, {
-  value: "Female",
-  label: "Female"
-}, {
-  value: "Other",
-  label: "Other"
-}];
+const GENDER_OPTIONS = [
+  {
+    value: "Male",
+    label: "Male"
+  },
+  {
+    value: "Female",
+    label: "Female"
+  },
+  {
+    value: "Other",
+    label: "Other"
+  }
+];
 
 const DEPARTMENT_OPTIONS = ["Engineering", "Design", "Product", "Marketing", "Sales", "HR", "Other"];
 
@@ -226,7 +230,11 @@ function MemberAuth({
     if (id) {
       const {
         data: profile
-      } = await supabase.from("profiles").select("status").eq("id", id).maybeSingle();
+      } = await supabase
+        .from("profiles")
+        .select("status")
+        .eq("id", id)
+        .maybeSingle();
       
       if (profile?.status === "pending") {
         setErr(null);

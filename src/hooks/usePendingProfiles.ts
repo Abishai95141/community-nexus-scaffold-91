@@ -17,7 +17,7 @@ export function usePendingProfiles() {
         throw error;
       }
       
-      return data;
+      return data || [];
     },
   });
 }
